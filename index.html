@@ -1,814 +1,738 @@
-هاي لك الكود كامل مع التعديلات الثلاثة:
-
-```html
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>The Backrooms - Souhail Alaoui Edition</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            touch-action: none;
-        }
-        
-        body {
-            overflow: hidden;
-            background: #000;
-            font-family: 'Courier New', monospace;
-        }
-        
-        #gameCanvas {
-            display: block;
-            cursor: none;
-        }
-        
-        #ui {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 100;
-        }
-        
-        #crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 0, 0.5);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        #crosshair::before, #crosshair::after {
-            content: '';
-            position: absolute;
-            background: rgba(255, 255, 0, 0.5);
-        }
-        
-        #crosshair::before {
-            width: 2px;
-            height: 10px;
-            top: 5px;
-            left: 9px;
-        }
-        
-        #crosshair::after {
-            width: 10px;
-            height: 2px;
-            top: 9px;
-            left: 5px;
-        }
-        
-        #startScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #1a1a0a;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
-            cursor: default;
-        }
-        
-        #startScreen h1 {
-            color: #ff0;
-            font-size: 48px;
-            text-shadow: 0 0 20px #ff0;
-            margin-bottom: 20px;
-            animation: flicker 2s infinite;
-        }
-        
-        @keyframes flicker {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-            75% { opacity: 0.9; }
-        }
-        
-        #startScreen p {
-            color: #cc0;
-            font-size: 18px;
-            margin: 10px;
-            text-align: center;
-        }
-        
-        #startBtn {
-            margin-top: 30px;
-            padding: 15px 40px;
-            font-size: 20px;
-            background: #ff0;
-            color: #000;
-            border: none;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        
-        #startBtn:hover {
-            background: #cc0;
-            box-shadow: 0 0 20px #ff0;
-        }
-        
-        #noise {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            opacity: 0.03;
-            z-index: 50;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-        }
-        
-        #vignette {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 40;
-            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%);
-        }
-        
-        /* ===== تحكم الهاتف - أزرار الأسهم ===== */
-        #mobileControls {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 150;
-            display: none;
-        }
-        
-        /* أزرار الأسهم على اليسار */
-        #arrowButtons {
-            position: absolute;
-            bottom: 50px;
-            left: 30px;
-            width: 150px;
-            height: 200px;
-            pointer-events: auto;
-        }
-        
-        .arrowBtn {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 0, 0.1);
-            border: 2px solid rgba(255, 255, 0, 0.3);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: rgba(255, 255, 0, 0.7);
-            font-size: 24px;
-            user-select: none;
-            transition: all 0.1s;
-        }
-        
-        .arrowBtn:active, .arrowBtn.active {
-            background: rgba(255, 255, 0, 0.3);
-            border-color: rgba(255, 255, 0, 0.8);
-            transform: scale(0.95);
-        }
-        
-        #btnUp { top: 0; left: 50px; }
-        #btnDown { bottom: 0; left: 50px; }
-        #btnLeft { top: 75px; left: 0; }
-        #btnRight { top: 75px; right: 0; }
-        
-        /* منطقة التحكم باللمس على اليمين */
-        #touchLookArea {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 50%;
-            height: 100%;
-            pointer-events: auto;
-            touch-action: none;
-        }
-        
-        /* تلميح للمستخدم */
-        #touchHint {
-            position: absolute;
-            top: 50%;
-            right: 25%;
-            transform: translate(50%, -50%);
-            color: rgba(255, 255, 255, 0.2);
-            font-size: 14px;
-            text-align: center;
-            pointer-events: none;
-        }
-        
-        @media (max-width: 768px) {
-            #mobileControls {
-                display: block;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>BACKROOMS — SOUHAIL ALAOUI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Rubik:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --yellow:#e8c400;
+    --yellow-dim:#8a7500;
+    --black:#050503;
+    --panel:rgba(10,9,4,0.72);
+    --danger:#e8c400;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+    background:#000; font-family:'Rubik',sans-serif; color:var(--yellow);
+    touch-action:none; overscroll-behavior:none;
+  }
+  #renderCanvas{position:fixed; inset:0; display:block; width:100%; height:100%;}
+
+  /* ---------- START SCREEN ---------- */
+  #startScreen{
+    position:fixed; inset:0; z-index:50;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:
+      radial-gradient(ellipse at 50% 20%, rgba(232,196,0,0.10), transparent 60%),
+      repeating-linear-gradient(0deg, #0a0900 0px, #0a0900 2px, #060502 2px, #060502 4px),
+      #050400;
+    gap:18px; text-align:center; padding:24px;
+  }
+  .brandStripe{
+    width:100%; height:10px;
+    background:repeating-linear-gradient(135deg, var(--yellow) 0 18px, #000 18px 36px);
+    opacity:0.85;
+  }
+  #startScreen .brandStripe.bottom{position:absolute; bottom:0; left:0;}
+  #startScreen .brandStripe.top{position:absolute; top:0; left:0;}
+  .logoWrap{position:relative;}
+  .glitchTitle{
+    font-family:'Archivo Black', sans-serif;
+    font-size:clamp(38px, 11vw, 90px);
+    letter-spacing:2px;
+    color:var(--yellow);
+    text-shadow:0 0 18px rgba(232,196,0,0.55), 0 0 60px rgba(232,196,0,0.25);
+    position:relative;
+    animation:flicker 3.2s infinite;
+    line-height:0.95;
+  }
+  .glitchTitle span{display:block; font-size:0.32em; letter-spacing:10px; color:#fff2b0; margin-top:10px; font-family:'Rubik',sans-serif; font-weight:900;}
+  @keyframes flicker{
+    0%,19%,21%,23%,80%,100%{opacity:1;}
+    20%{opacity:0.35;}
+    22%{opacity:0.85;}
+    79%{opacity:0.5;}
+  }
+  .devTag{
+    font-weight:900; font-size:clamp(13px,3.4vw,17px); letter-spacing:3px;
+    color:#000; background:var(--yellow); padding:6px 16px; border-radius:2px;
+    box-shadow:0 0 24px rgba(232,196,0,0.45);
+    font-family:'Rubik',sans-serif;
+  }
+  .devTag::before{content:"< "; opacity:0.6;}
+  .devTag::after{content:" />"; opacity:0.6;}
+  #playBtn{
+    margin-top:10px;
+    font-family:'Archivo Black',sans-serif;
+    font-size:clamp(20px,5vw,28px);
+    color:#000; background:var(--yellow);
+    border:none; padding:16px 52px; border-radius:6px;
+    letter-spacing:3px; cursor:pointer;
+    box-shadow:0 0 0 3px #000 inset, 0 8px 0 #6b5c00, 0 12px 30px rgba(232,196,0,0.35);
+    transform:translateY(0); transition:transform .08s;
+  }
+  #playBtn:active{transform:translateY(6px); box-shadow:0 0 0 3px #000 inset, 0 2px 0 #6b5c00;}
+  .hint{font-size:13px; color:#b7a54a; max-width:340px; line-height:1.7; font-weight:500;}
+  .hint b{color:var(--yellow);}
+
+  /* ---------- HUD / IN-GAME UI ---------- */
+  #hud{position:fixed; inset:0; z-index:20; pointer-events:none; display:none;}
+  #hud.active{display:block;}
+
+  .topBar{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+    background:linear-gradient(to bottom, rgba(0,0,0,0.65), transparent);
+  }
+  .brandMark{
+    font-family:'Rubik',sans-serif; font-weight:900; font-size:14px; letter-spacing:2px;
+    color:var(--yellow); background:rgba(0,0,0,0.55); border:1.5px solid var(--yellow);
+    padding:5px 10px; border-radius:4px; pointer-events:auto;
+  }
+  #battery{
+    font-family:'Rubik',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px;
+    color:var(--yellow); background:rgba(0,0,0,0.55); border:1.5px solid var(--yellow-dim);
+    padding:5px 10px; border-radius:4px;
+  }
+
+  .crosshair{
+    position:absolute; top:50%; left:50%; width:8px; height:8px;
+    transform:translate(-50%,-50%);
+    border:2px solid var(--yellow); border-radius:50%;
+    opacity:0.65; box-shadow:0 0 8px rgba(232,196,0,0.5);
+  }
+
+  .msgLine{
+    position:absolute; bottom:calc(150px + env(safe-area-inset-bottom)); left:0; right:0;
+    text-align:center; font-family:'Archivo Black',sans-serif; font-size:15px;
+    letter-spacing:2px; color:var(--yellow); text-shadow:0 0 12px rgba(232,196,0,0.6);
+    opacity:0; transition:opacity .4s;
+  }
+  .msgLine.show{opacity:1;}
+
+  /* touch look zone: whole screen behind joystick/buttons */
+  #lookZone{position:absolute; inset:0; pointer-events:auto;}
+
+  /* virtual joystick */
+  #joyZone{
+    position:absolute; left:22px; bottom:calc(26px + env(safe-area-inset-bottom));
+    width:130px; height:130px; pointer-events:auto;
+  }
+  #joyBase{
+    position:absolute; inset:0; border-radius:50%;
+    background:rgba(232,196,0,0.08);
+    border:2px solid rgba(232,196,0,0.45);
+    backdrop-filter:blur(1px);
+  }
+  #joyStick{
+    position:absolute; width:56px; height:56px; border-radius:50%;
+    left:50%; top:50%; transform:translate(-50%,-50%);
+    background:rgba(232,196,0,0.32); border:2px solid var(--yellow);
+    box-shadow:0 0 16px rgba(232,196,0,0.4);
+  }
+
+  .actionBtn{
+    position:absolute; pointer-events:auto;
+    width:72px; height:72px; border-radius:50%;
+    background:rgba(232,196,0,0.10); border:2px solid rgba(232,196,0,0.55);
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; color:var(--yellow);
+    box-shadow:0 0 14px rgba(232,196,0,0.15);
+  }
+  .actionBtn:active, .actionBtn.on{background:rgba(232,196,0,0.38); box-shadow:0 0 22px rgba(232,196,0,0.5);}
+  #flashlightBtn{right:24px; bottom:calc(120px + env(safe-area-inset-bottom));}
+  #sprintBtn{right:110px; bottom:calc(40px + env(safe-area-inset-bottom)); width:60px; height:60px; font-size:20px;}
+  #muteBtn{position:absolute; top:calc(10px + env(safe-area-inset-top)); left:16px; pointer-events:auto;
+    width:38px; height:38px; border-radius:6px; background:rgba(0,0,0,0.55); border:1.5px solid var(--yellow-dim);
+    color:var(--yellow); font-size:16px; display:flex; align-items:center; justify-content:center;}
+
+  #exitBtn{position:absolute; top:calc(10px + env(safe-area-inset-top)); right:16px; pointer-events:auto;
+    width:38px; height:38px; border-radius:6px; background:rgba(0,0,0,0.55); border:1.5px solid var(--yellow-dim);
+    color:var(--yellow); font-size:18px; display:flex; align-items:center; justify-content:center; font-weight:900;}
+
+  @media (min-width:820px){
+    #joyZone,#flashlightBtn,#sprintBtn{transform:scale(1.15);}
+  }
+</style>
 </head>
 <body>
-    <div id="startScreen">
-        <h1>THE BACKROOMS</h1>
-        <p>Souhail Alaoui Edition</p>
-        <p>Level 0 - The Lobby</p>
-        <p id="desktopInstr">WASD: حركة | MOUSE: نظر</p>
-        <p id="mobileInstr" style="display:none">الأسهم: حركة | لمس يمين: نظر</p>
-        <button id="startBtn">ادخل للـ Backrooms</button>
-    </div>
-    
-    <canvas id="gameCanvas"></canvas>
-    <div id="noise"></div>
-    <div id="vignette"></div>
-    <div id="ui">
-        <div id="crosshair"></div>
-    </div>
-    
-    <!-- تحكم الهاتف -->
-    <div id="mobileControls">
-        <!-- أزرار الأسهم -->
-        <div id="arrowButtons">
-            <div class="arrowBtn" id="btnUp">▲</div>
-            <div class="arrowBtn" id="btnDown">▼</div>
-            <div class="arrowBtn" id="btnLeft">◀</div>
-            <div class="arrowBtn" id="btnRight">▶</div>
-        </div>
-        
-        <!-- منطقة التحكم باللمس -->
-        <div id="touchLookArea">
-            <div id="touchHint">اسحب هنا<br>للنظر</div>
-        </div>
-    </div>
 
-    <script>
-        // ===== إعدادات اللعبة =====
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        // كشف الهاتف
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        if (isMobile) {
-            document.getElementById('desktopInstr').style.display = 'none';
-            document.getElementById('mobileInstr').style.display = 'block';
-        }
-        
-        // حجم الشاشة
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        // إعدادات اللاعب
-        const player = {
-            x: 2.5,
-            y: 2.5,
-            angle: 0,
-            height: 0.5,
-            speed: 0.03,
-            runSpeed: 0.06
-        };
-        
-        // إعدادات الرؤية
-        const FOV = Math.PI / 3;
-        const renderDistance = 20;
-        
-        // حالة المفاتيح والتحكم
-        const keys = {};
-        const mobileInput = {
-            forward: 0,
-            turn: 0
-        };
-        
-        // خريطة Backrooms
-        const map = [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,0,1,1,1,0,0,1,1,1,1,0,0,1,1,1,0,0,1],
-            [1,0,0,1,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1],
-            [1,0,0,1,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,0,1,1,0,0,1,1,1,1,1,1,0,0,1,1,0,0,1],
-            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
-            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
-            [1,0,0,1,1,1,0,0,1,1,1,1,0,0,1,1,1,0,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,0,1,1,1,0,0,1,1,0,0,1,1,1,0,0,0,0,1],
-            [1,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
-            [1,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-        ];
-        
-        const mapWidth = map[0].length;
-        const mapHeight = map.length;
-        
-        // ===== صوت Backrooms =====
-        let audioContext;
-        let lastFootstep = 0;
-        let isMoving = false;
-        
-        function initAudio() {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            const filter = audioContext.createBiquadFilter();
-            
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.value = 50;
-            
-            filter.type = 'lowpass';
-            filter.frequency.value = 200;
-            
-            gainNode.gain.value = 0.05;
-            
-            oscillator.connect(filter);
-            filter.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.start();
-            
-            setInterval(() => {
-                oscillator.frequency.value = 50 + (Math.random() * 10 - 5);
-                gainNode.gain.value = 0.03 + Math.random() * 0.03;
-            }, 100);
-        }
-        
-        function playFootstep() {
-            if (!audioContext) return;
-            
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.type = 'triangle';
-            oscillator.frequency.value = 80 + Math.random() * 40;
-            
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.1);
-        }
-        
-        // ===== نظام Raycasting =====
-        function castRay(angle) {
-            const sin = Math.sin(angle);
-            const cos = Math.cos(angle);
-            
-            let distance = 0;
-            let hit = false;
-            let hitX = 0;
-            let hitY = 0;
-            let side = 0;
-            
-            const stepX = cos > 0 ? 1 : -1;
-            const stepY = sin > 0 ? 1 : -1;
-            
-            let mapX = Math.floor(player.x);
-            let mapY = Math.floor(player.y);
-            
-            const deltaDistX = Math.abs(1 / cos);
-            const deltaDistY = Math.abs(1 / sin);
-            
-            let sideDistX = (cos > 0 ? mapX + 1 - player.x : player.x - mapX) * deltaDistX;
-            let sideDistY = (sin > 0 ? mapY + 1 - player.y : player.y - mapY) * deltaDistY;
-            
-            while (!hit && distance < renderDistance) {
-                if (sideDistX < sideDistY) {
-                    sideDistX += deltaDistX;
-                    mapX += stepX;
-                    side = 0;
-                } else {
-                    sideDistY += deltaDistY;
-                    mapY += stepY;
-                    side = 1;
-                }
-                
-                if (mapX < 0 || mapX >= mapWidth || mapY < 0 || mapY >= mapHeight) {
-                    hit = true;
-                    distance = renderDistance;
-                } else if (map[mapY][mapX] === 1) {
-                    hit = true;
-                    hitX = mapX;
-                    hitY = mapY;
-                    if (side === 0) {
-                        distance = (mapX - player.x + (1 - stepX) / 2) / cos;
-                    } else {
-                        distance = (mapY - player.y + (1 - stepY) / 2) / sin;
-                    }
-                }
-            }
-            
-            return { distance, side, hitX, hitY };
-        }
-        
-        // ===== رسم السقف الكحل الغامق مع إضاءة فلوريسنت =====
-        function drawCeiling(ctx) {
-            const ceilingHeight = canvas.height / 2;
-            
-            // سقف كحل غامق
-            for (let y = 0; y < ceilingHeight; y++) {
-                const progress = y / ceilingHeight;
-                const darkness = Math.floor(10 + progress * 15);
-                ctx.fillStyle = `rgb(${darkness}, ${darkness}, ${darkness + 2})`;
-                ctx.fillRect(0, y, canvas.width, 1);
-            }
-            
-            // إضاءة فلوريسنت صفراء ضعيفة
-            const numLights = 4;
-            const lightSpacing = canvas.width / numLights;
-            
-            for (let i = 0; i < numLights; i++) {
-                const lightX = i * lightSpacing + lightSpacing / 2;
-                
-                // توهج الإضاءة على السقف
-                const gradient = ctx.createRadialGradient(lightX, 0, 0, lightX, ceilingHeight * 0.3, 150);
-                gradient.addColorStop(0, 'rgba(255, 255, 150, 0.15)');
-                gradient.addColorStop(0.5, 'rgba(255, 255, 100, 0.05)');
-                gradient.addColorStop(1, 'rgba(255, 255, 50, 0)');
-                
-                ctx.fillStyle = gradient;
-                ctx.fillRect(lightX - 150, 0, 300, ceilingHeight);
-                
-                // شريط الإضاءة نفسه
-                const lightGradient = ctx.createLinearGradient(lightX - 30, 0, lightX + 30, 0);
-                lightGradient.addColorStop(0, 'rgba(255, 255, 200, 0)');
-                lightGradient.addColorStop(0.5, 'rgba(255, 255, 200, 0.3)');
-                lightGradient.addColorStop(1, 'rgba(255, 255, 200, 0)');
-                
-                ctx.fillStyle = lightGradient;
-                ctx.fillRect(lightX - 30, 5, 60, 8);
-            }
-        }
-        
-        // ===== رسم نص "Souhail Alaoui" على الجدار =====
-        function drawWallText(ctx, x, y, width, height, brightness, side) {
-            const text = "Souhail Alaoui";
-            
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(x, y, width, height);
-            ctx.clip();
-            
-            // حجم الخط كبير وعريض
-            const fontSize = Math.min(width / 6, height / 2);
-            ctx.font = `900 ${fontSize}px Arial, sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // لون أبيض/أصفر فاتح واضح
-            const alpha = brightness * 0.95;
-            const textColor = side === 1 ? 
-                `rgba(255, 255, 220, ${alpha})` : 
-                `rgba(255, 255, 255, ${alpha})`;
-            
-            ctx.fillStyle = textColor;
-            ctx.shadowColor = 'rgba(255, 255, 100, 0.6)';
-            ctx.shadowBlur = 8;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-            
-            // تكرار النص على الجدار كـ wallpaper
-            const rows = 4;
-            const cols = 2;
-            
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    const textX = x + width * (col + 0.5) / cols;
-                    const textY = y + height * (row + 0.5) / rows;
-                    
-                    // دوران بسيط للتنوع
-                    ctx.save();
-                    ctx.translate(textX, textY);
-                    ctx.rotate((row * cols + col) * 0.02);
-                    ctx.fillText(text, 0, 0);
-                    ctx.restore();
-                }
-            }
-            
-            ctx.restore();
-        }
-        
-        // ===== رسم الإطار =====
-        function render() {
-            // السقف الكحل الغامق مع الإضاءة
-            drawCeiling(ctx);
-            
-            // الأرضية
-            const gradientFloor = ctx.createLinearGradient(0, canvas.height / 2, 0, canvas.height);
-            gradientFloor.addColorStop(0, '#1a1a0a');
-            gradientFloor.addColorStop(1, '#2a2a15');
-            ctx.fillStyle = gradientFloor;
-            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
-            
-            // رسم الجدران
-            const numRays = Math.min(canvas.width / 2, 320);
-            const angleStep = FOV / numRays;
-            
-            for (let i = 0; i < numRays; i++) {
-                const rayAngle = player.angle - FOV / 2 + i * angleStep;
-                const ray = castRay(rayAngle);
-                
-                const correctedDistance = ray.distance * Math.cos(rayAngle - player.angle);
-                
-                if (ray.distance < renderDistance) {
-                    const wallHeight = canvas.height / correctedDistance;
-                    const wallTop = (canvas.height - wallHeight) / 2;
-                    const stripWidth = canvas.width / numRays;
-                    
-                    // لون الجدار الأصفر
-                    const brightness = Math.max(0.2, 1 - ray.distance / renderDistance);
-                    const yellowIntensity = Math.floor(60 + brightness * 80);
-                    
-                    let baseColor;
-                    if (ray.side === 1) {
-                        baseColor = `rgb(${yellowIntensity * 0.5}, ${yellowIntensity * 0.5}, ${yellowIntensity * 0.1})`;
-                    } else {
-                        baseColor = `rgb(${yellowIntensity * 0.7}, ${yellowIntensity * 0.7}, ${yellowIntensity * 0.2})`;
-                    }
-                    
-                    // رسم الجدار
-                    ctx.fillStyle = baseColor;
-                    ctx.fillRect(i * stripWidth, wallTop, stripWidth + 1, wallHeight);
-                    
-                    // نمط ورق الجدران
-                    if (i % 4 === 0) {
-                        ctx.fillStyle = `rgba(0, 0, 0, ${0.1 * brightness})`;
-                        ctx.fillRect(i * stripWidth, wallTop, stripWidth + 1, wallHeight);
-                    }
-                    
-                    // رسم "Souhail Alaoui" على الجدران
-                    if (ray.distance < 15 && i % 12 === 0) {
-                        drawWallText(
-                            ctx, 
-                            i * stripWidth - 10, 
-                            wallTop + wallHeight * 0.1, 
-                            stripWidth * 12, 
-                            wallHeight * 0.8,
-                            brightness,
-                            ray.side
-                        );
-                    }
-                    
-                    // ظل الجدار
-                    ctx.fillStyle = `rgba(0, 0, 0, ${ray.side === 1 ? 0.4 : 0.15})`;
-                    ctx.fillRect(i * stripWidth, wallTop, stripWidth + 1, wallHeight);
-                }
-            }
-            
-            // تأثير الضباب
-            const fogGradient = ctx.createRadialGradient(
-                canvas.width / 2, canvas.height / 2, 0,
-                canvas.width / 2, canvas.height / 2, canvas.width * 0.7
-            );
-            fogGradient.addColorStop(0, 'rgba(0,0,0,0)');
-            fogGradient.addColorStop(1, 'rgba(10,10,0,0.5)');
-            ctx.fillStyle = fogGradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // صوت الخطوات
-            if (isMoving && Date.now() - lastFootstep > 450) {
-                playFootstep();
-                lastFootstep = Date.now();
-            }
-        }
-        
-        // ===== تحديث اللاعب =====
-        function updatePlayer() {
-            isMoving = false;
-            
-            // حركة للأمام/الخلف
-            let moveForward = 0;
-            if (keys['w'] || mobileInput.forward > 0) moveForward = 1;
-            if (keys['s'] || mobileInput.forward < 0) moveForward = -1;
-            
-            // دوران
-            let turn = 0;
-            if (keys['arrowleft'] || mobileInput.turn < 0) turn = -1;
-            if (keys['arrowright'] || mobileInput.turn > 0) turn = 1;
-            
-            // تطبيق الدوران
-            player.angle += turn * 0.04;
-            
-            // حساب الحركة
-            const speed = player.speed;
-            const newX = player.x + Math.cos(player.angle) * moveForward * speed;
-            const newY = player.y + Math.sin(player.angle) * moveForward * speed;
-            
-            // التحقق من التصادم
-            if (map[Math.floor(player.y)][Math.floor(newX)] === 0) {
-                player.x = newX;
-            }
-            if (map[Math.floor(newY)][Math.floor(player.x)] === 0) {
-                player.y = newY;
-            }
-            
-            if (moveForward !== 0 || turn !== 0) {
-                isMoving = moveForward !== 0;
-            }
-        }
-        
-        // ===== تحكم الهاتف =====
-        function setupMobileControls() {
-            // أزرار الأسهم
-            const btnUp = document.getElementById('btnUp');
-            const btnDown = document.getElementById('btnDown');
-            const btnLeft = document.getElementById('btnLeft');
-            const btnRight = document.getElementById('btnRight');
-            
-            // زر الفوق (للأمام)
-            btnUp.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                mobileInput.forward = 1;
-                btnUp.classList.add('active');
-            }, { passive: false });
-            
-            btnUp.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                mobileInput.forward = 0;
-                btnUp.classList.remove('active');
-            }, { passive: false });
-            
-            // زر التحت (للخلف)
-            btnDown.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                mobileInput.forward = -1;
-                btnDown.classList.add('active');
-            }, { passive: false });
-            
-            btnDown.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                mobileInput.forward = 0;
-                btnDown.classList.remove('active');
-            }, { passive: false });
-            
-            // زر اليسار (دوران يسار)
-            btnLeft.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                mobileInput.turn = -1;
-                btnLeft.classList.add('active');
-            }, { passive: false });
-            
-            btnLeft.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                mobileInput.turn = 0;
-                btnLeft.classList.remove('active');
-            }, { passive: false });
-            
-            // زر اليمين (دوران يمين)
-            btnRight.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                mobileInput.turn = 1;
-                btnRight.classList.add('active');
-            }, { passive: false });
-            
-            btnRight.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                mobileInput.turn = 0;
-                btnRight.classList.remove('active');
-            }, { passive: false });
-            
-            // منطقة التحكم باللمس على اليمين
-            const touchArea = document.getElementById('touchLookArea');
-            let lastTouchX = null;
-            
-            touchArea.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                lastTouchX = e.touches[0].clientX;
-            }, { passive: false });
-            
-            touchArea.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (lastTouchX !== null) {
-                    const touchX = e.touches[0].clientX;
-                    const deltaX = touchX - lastTouchX;
-                    
-                    // الدوران حسب حركة السحب
-                    player.angle += deltaX * 0.005;
-                    
-                    lastTouchX = touchX;
-                }
-            }, { passive: false });
-            
-            touchArea.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                lastTouchX = null;
-            }, { passive: false });
-        }
-        
-        // ===== تحكم الكيبورد =====
-        document.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            if (e.key === 'ArrowUp') keys['w'] = true;
-            if (e.key === 'ArrowDown') keys['s'] = true;
-            if (e.key === 'ArrowLeft') keys['arrowleft'] = true;
-            if (e.key === 'ArrowRight') keys['arrowright'] = true;
-        });
-        
-        document.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
-            if (e.key === 'ArrowUp') keys['w'] = false;
-            if (e.key === 'ArrowDown') keys['s'] = false;
-            if (e.key === 'ArrowLeft') keys['arrowleft'] = false;
-            if (e.key === 'ArrowRight') keys['arrowright'] = false;
-        });
-        
-        // التحكم بالماوس
-        let isPointerLocked = false;
-        
-        canvas.addEventListener('click', () => {
-            if (!isPointerLocked && !isMobile) {
-                canvas.requestPointerLock();
-            }
-        });
-        
-        document.addEventListener('pointerlockchange', () => {
-            isPointerLocked = document.pointerLockElement === canvas;
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (isPointerLocked && !isMobile) {
-                player.angle += e.movementX * 0.002;
-            }
-        });
-        
-        // ===== حلقة اللعبة =====
-        function gameLoop() {
-            updatePlayer();
-            render();
-            requestAnimationFrame(gameLoop);
-        }
-        
-        // ===== بدء اللعبة =====
-        document.getElementById('startBtn').addEventListener('click', () => {
-            document.getElementById('startScreen').style.display = 'none';
-            initAudio();
-            
-            if (!isMobile) {
-                canvas.requestPointerLock();
-            }
-            
-            if (isMobile) {
-                setupMobileControls();
-            }
-            
-            gameLoop();
-        });
-        
-        // تغيير حجم النافذة
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-    </script>
+<canvas id="renderCanvas"></canvas>
+
+<!-- START SCREEN -->
+<div id="startScreen">
+  <div class="brandStripe top"></div>
+  <div class="logoWrap">
+    <div class="glitchTitle">BACKROOMS<span>لا نهاية لهذا المكان</span></div>
+  </div>
+  <div class="devTag">SOUHAIL ALAOUI</div>
+  <button id="playBtn">ابدأ</button>
+  <div class="hint">
+    حرك جهاز اللمس فالجانب الأيسر باش تمشي، ولمس فأي بلاصة أخرى باش تدور الكاميرا.
+    <br><b>على الكمبيوتر:</b> WASD للحركة + الماوس للدوران.
+  </div>
+  <div class="brandStripe bottom"></div>
+</div>
+
+<!-- IN GAME HUD -->
+<div id="hud">
+  <div id="lookZone"></div>
+
+  <div class="topBar">
+    <div class="brandMark">&lt;SOUHAIL ALAOUI /&gt;</div>
+    <div id="battery">🔋 100%</div>
+  </div>
+
+  <div class="crosshair"></div>
+  <div class="msgLine" id="msgLine"></div>
+
+  <button id="muteBtn">🔊</button>
+  <button id="exitBtn">✕</button>
+
+  <div id="joyZone">
+    <div id="joyBase"></div>
+    <div id="joyStick"></div>
+  </div>
+
+  <button class="actionBtn" id="flashlightBtn">🔦</button>
+  <button class="actionBtn" id="sprintBtn">⚡</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   SOUHAIL ALAOUI — BACKROOMS
+   Procedural maze, yellow/black neon-grime theme,
+   fluorescent flicker lighting, touch joystick + drag-look.
+   ============================================================ */
+
+/* ---------------- CONFIG ---------------- */
+const CELL = 4;          // world units per grid cell
+const ROOMS_X = 14;       // maze "room" grid (odd path/wall doubling below)
+const ROOMS_Z = 14;
+const WALL_H = 3.6;
+const EXTRA_OPEN_RATIO = 0.22; // knock extra walls down for open backrooms feel
+const PLAYER_RADIUS = 0.34 * CELL;
+const MOVE_SPEED = 5.2;
+const SPRINT_MULT = 1.8;
+
+/* ---------------- MAZE GENERATION ---------------- */
+function buildMaze(rx, rz){
+  const GW = rx*2+1, GH = rz*2+1;
+  const grid = [];
+  for(let z=0; z<GH; z++){ grid.push(new Array(GW).fill(1)); }
+
+  function cellOpen(cx, cz){ grid[cz*2+1][cx*2+1] = 0; }
+  function wallOpen(cx1,cz1,cx2,cz2){
+    const wx = cx1+cx2+1, wz = cz1+cz2+1;
+    grid[wz][wx] = 0;
+  }
+
+  const visited = [];
+  for(let z=0; z<rz; z++) visited.push(new Array(rx).fill(false));
+
+  const stack = [[0,0]];
+  visited[0][0] = true;
+  cellOpen(0,0);
+
+  while(stack.length){
+    const [cx,cz] = stack[stack.length-1];
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dz])=>{
+      const nx=cx+dx, nz=cz+dz;
+      return nx>=0 && nx<rx && nz>=0 && nz<rz && !visited[nz][nx];
+    });
+    if(dirs.length===0){ stack.pop(); continue; }
+    const [dx,dz] = dirs[Math.floor(Math.random()*dirs.length)];
+    const nx=cx+dx, nz=cz+dz;
+    visited[nz][nx] = true;
+    cellOpen(nx,nz);
+    wallOpen(cx,cz,nx,nz);
+    stack.push([nx,nz]);
+  }
+
+  // knock extra interior walls down for open backrooms clusters
+  for(let z=0; z<rz; z++){
+    for(let x=0; x<rx; x++){
+      if(x<rx-1 && Math.random()<EXTRA_OPEN_RATIO) wallOpen(x,z,x+1,z);
+      if(z<rz-1 && Math.random()<EXTRA_OPEN_RATIO) wallOpen(x,z,x,z+1);
+    }
+  }
+  return {grid, GW, GH};
+}
+
+const {grid, GW, GH} = buildMaze(ROOMS_X, ROOMS_Z);
+
+function gridToWorld(gx,gz){
+  return [ (gx - GW/2) * CELL, (gz - GH/2) * CELL ];
+}
+function worldToGrid(x,z){
+  return [ Math.round(x/CELL + GW/2), Math.round(z/CELL + GH/2) ];
+}
+function isWallAt(gx,gz){
+  if(gx<0||gz<0||gx>=GW||gz>=GH) return true;
+  return grid[gz][gx] === 1;
+}
+
+// find a start cell (open) near center
+let startGX = GW/2|0, startGZ = GH/2|0;
+outer:
+for(let r=0;r<Math.max(GW,GH);r++){
+  for(let z=Math.max(0,startGZ-r); z<=Math.min(GH-1,startGZ+r); z++){
+    for(let x=Math.max(0,startGX-r); x<=Math.min(GW-1,startGX+r); x++){
+      if(!isWallAt(x,z)){ startGX=x; startGZ=z; break outer; }
+    }
+  }
+}
+
+/* ---------------- CANVAS TEXTURES ---------------- */
+function makeWallTexture(){
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 512;
+  const g = c.getContext('2d');
+
+  // base grimy yellow
+  g.fillStyle = '#a8930f';
+  g.fillRect(0,0,512,512);
+
+  // noise/stains
+  for(let i=0;i<260;i++){
+    const x=Math.random()*512, y=Math.random()*512, r=Math.random()*40+4;
+    g.fillStyle = `rgba(0,0,0,${(Math.random()*0.12).toFixed(3)})`;
+    g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fill();
+  }
+  for(let i=0;i<120;i++){
+    const x=Math.random()*512, y=Math.random()*512, r=Math.random()*18+2;
+    g.fillStyle = `rgba(255,238,150,${(Math.random()*0.10).toFixed(3)})`;
+    g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fill();
+  }
+
+  // black hazard baseboard + trim
+  g.fillStyle = '#0a0900';
+  g.fillRect(0,440,512,72);
+  g.fillRect(0,0,512,14);
+
+  // repeated brand wallpaper text, diagonal tiling
+  g.save();
+  g.translate(256,256);
+  g.rotate(-0.35);
+  g.translate(-256,-256);
+  g.font = "900 40px 'Archivo Black', sans-serif";
+  g.fillStyle = 'rgba(10,9,0,0.55)';
+  g.textBaseline = 'middle';
+  for(let row=-2; row<8; row++){
+    const y = row*70;
+    const offset = (row%2===0) ? 0 : 140;
+    for(let col=-2; col<6; col++){
+      const x = col*300 + offset;
+      g.fillText('SOUHAIL ALAOUI', x, y);
+    }
+  }
+  g.restore();
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(1,1);
+  tex.magFilter = THREE.LinearFilter;
+  return tex;
+}
+
+function makeFloorTexture(){
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 256;
+  const g = c.getContext('2d');
+  g.fillStyle = '#0d0c07';
+  g.fillRect(0,0,256,256);
+  // tile grid
+  g.strokeStyle = 'rgba(232,196,0,0.10)';
+  g.lineWidth = 2;
+  for(let i=0;i<=256;i+=32){
+    g.beginPath(); g.moveTo(i,0); g.lineTo(i,256); g.stroke();
+    g.beginPath(); g.moveTo(0,i); g.lineTo(256,i); g.stroke();
+  }
+  for(let i=0;i<180;i++){
+    g.fillStyle = `rgba(232,196,0,${(Math.random()*0.05).toFixed(3)})`;
+    g.beginPath(); g.arc(Math.random()*256,Math.random()*256, Math.random()*14+2, 0, Math.PI*2); g.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(GW/2, GH/2);
+  return tex;
+}
+
+function makeCeilingTexture(){
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 256;
+  const g = c.getContext('2d');
+  g.fillStyle = '#050400';
+  g.fillRect(0,0,256,256);
+  g.strokeStyle = 'rgba(232,196,0,0.14)';
+  g.lineWidth = 3;
+  for(let i=0;i<=256;i+=64){
+    g.beginPath(); g.moveTo(i,0); g.lineTo(i,256); g.stroke();
+    g.beginPath(); g.moveTo(0,i); g.lineTo(256,i); g.stroke();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(GW/4, GH/4);
+  return tex;
+}
+
+/* ---------------- THREE SETUP ---------------- */
+const canvas = document.getElementById('renderCanvas');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = false;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x030300);
+scene.fog = new THREE.FogExp2(0x08060a, 0.055);
+
+const camera = new THREE.PerspectiveCamera(72, window.innerWidth/window.innerHeight, 0.05, 120);
+camera.position.set(...gridToWorld(startGX,startGZ), ).length; // no-op guard
+let [sx,sz] = gridToWorld(startGX,startGZ);
+camera.position.set(sx, 1.65, sz);
+
+let yaw = 0, pitch = 0;
+
+// ambient dim
+scene.add(new THREE.AmbientLight(0x554400, 0.35));
+
+// walls (instanced)
+const wallTex = makeWallTexture();
+const wallGeo = new THREE.BoxGeometry(CELL, WALL_H, CELL);
+const wallMat = new THREE.MeshStandardMaterial({map:wallTex, roughness:0.92, metalness:0.02});
+
+let wallCount = 0;
+for(let z=0; z<GH; z++) for(let x=0; x<GW; x++) if(grid[z][x]===1) wallCount++;
+
+const wallMesh = new THREE.InstancedMesh(wallGeo, wallMat, wallCount);
+{
+  const dummy = new THREE.Object3D();
+  let idx = 0;
+  for(let z=0; z<GH; z++){
+    for(let x=0; x<GW; x++){
+      if(grid[z][x]===1){
+        const [wx,wz] = gridToWorld(x,z);
+        dummy.position.set(wx, WALL_H/2, wz);
+        dummy.updateMatrix();
+        wallMesh.setMatrixAt(idx++, dummy.matrix);
+      }
+    }
+  }
+}
+scene.add(wallMesh);
+
+// floor
+const floorGeo = new THREE.PlaneGeometry(GW*CELL, GH*CELL);
+const floorMat = new THREE.MeshStandardMaterial({map:makeFloorTexture(), roughness:1});
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI/2;
+floor.position.set(0,0,0);
+scene.add(floor);
+
+// ceiling
+const ceilGeo = new THREE.PlaneGeometry(GW*CELL, GH*CELL);
+const ceilMat = new THREE.MeshStandardMaterial({map:makeCeilingTexture(), roughness:1, side:THREE.DoubleSide});
+const ceiling = new THREE.Mesh(ceilGeo, ceilMat);
+ceiling.rotation.x = Math.PI/2;
+ceiling.position.set(0, WALL_H, 0);
+scene.add(ceiling);
+
+// fluorescent ceiling lights: emissive strips + point lights, placed on open cells grid pattern
+const fluoGeo = new THREE.PlaneGeometry(CELL*0.7, CELL*0.22);
+const fluoMat = new THREE.MeshBasicMaterial({color:0xfff4b0, toneMapped:false});
+const lights = [];
+for(let z=1; z<GH-1; z+=4){
+  for(let x=1; x<GW-1; x+=4){
+    if(grid[z] && grid[z][x]===0){
+      const [wx,wz] = gridToWorld(x,z);
+      const tube = new THREE.Mesh(fluoGeo, fluoMat.clone());
+      tube.rotation.x = Math.PI/2;
+      tube.position.set(wx, WALL_H-0.05, wz);
+      scene.add(tube);
+
+      const pl = new THREE.PointLight(0xffe98a, 1.6, CELL*6.5, 2);
+      pl.position.set(wx, WALL_H-0.3, wz);
+      scene.add(pl);
+
+      lights.push({mesh:tube, light:pl, phase:Math.random()*10, baseI:1.6});
+    }
+  }
+}
+if(lights.length===0){
+  // fallback: at least one light at start
+  const pl = new THREE.PointLight(0xffe98a, 1.6, CELL*6, 2);
+  pl.position.set(sx, WALL_H-0.3, sz);
+  scene.add(pl);
+  lights.push({mesh:null, light:pl, phase:0, baseI:1.6});
+}
+
+// player flashlight (spotlight attached to camera)
+const flashlight = new THREE.SpotLight(0xfff6cf, 0, 14, Math.PI/6.2, 0.5, 1.4);
+flashlight.position.set(0,0,0);
+const flashTarget = new THREE.Object3D();
+flashTarget.position.set(0,0,-1);
+camera.add(flashlight, flashTarget);
+flashlight.target = flashTarget;
+scene.add(camera);
+
+/* ---------------- RESIZE ---------------- */
+window.addEventListener('resize', ()=>{
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ---------------- AUDIO (ambient hum) ---------------- */
+let audioCtx=null, ambientNodes=null, audioOn=true;
+function startAmbient(){
+  try{
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc1 = audioCtx.createOscillator();
+    osc1.type='sine'; osc1.frequency.value=60;
+    const osc2 = audioCtx.createOscillator();
+    osc2.type='sine'; osc2.frequency.value=121;
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.05;
+    const buzz = audioCtx.createOscillator();
+    buzz.type='square'; buzz.frequency.value=120;
+    const buzzGain = audioCtx.createGain();
+    buzzGain.gain.value = 0.008;
+    osc1.connect(gain); osc2.connect(gain);
+    buzz.connect(buzzGain);
+    gain.connect(audioCtx.destination);
+    buzzGain.connect(audioCtx.destination);
+    osc1.start(); osc2.start(); buzz.start();
+    ambientNodes = {osc1,osc2,buzz,gain,buzzGain};
+  }catch(e){ /* audio unsupported, ignore */ }
+}
+
+/* ---------------- INPUT: KEYBOARD (desktop) ---------------- */
+const keys = {};
+window.addEventListener('keydown', e=>keys[e.code]=true);
+window.addEventListener('keyup', e=>keys[e.code]=false);
+
+let pointerLocked=false;
+canvas.addEventListener('click', ()=>{
+  if(window.matchMedia('(pointer: fine)').matches && document.getElementById('hud').classList.contains('active')){
+    canvas.requestPointerLock && canvas.requestPointerLock();
+  }
+});
+document.addEventListener('pointerlockchange', ()=>{ pointerLocked = document.pointerLockElement===canvas; });
+document.addEventListener('mousemove', e=>{
+  if(!pointerLocked) return;
+  yaw -= e.movementX * 0.0022;
+  pitch -= e.movementY * 0.0022;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch));
+});
+
+/* ---------------- INPUT: TOUCH LOOK ---------------- */
+const lookZone = document.getElementById('lookZone');
+const joyZone = document.getElementById('joyZone');
+let lookTouchId = null, lastLookX=0, lastLookY=0;
+
+function pointInRect(x,y,el){
+  const r = el.getBoundingClientRect();
+  return x>=r.left && x<=r.right && y>=r.top && y<=r.bottom;
+}
+
+lookZone.addEventListener('touchstart', e=>{
+  for(const t of e.changedTouches){
+    if(pointInRect(t.clientX,t.clientY,joyZone)) continue; // joystick handles this one
+    if(lookTouchId===null){
+      lookTouchId = t.identifier;
+      lastLookX = t.clientX; lastLookY = t.clientY;
+    }
+  }
+}, {passive:true});
+
+lookZone.addEventListener('touchmove', e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===lookTouchId){
+      const dx = t.clientX-lastLookX, dy = t.clientY-lastLookY;
+      lastLookX=t.clientX; lastLookY=t.clientY;
+      yaw -= dx*0.0032;
+      pitch -= dy*0.0032;
+      pitch = Math.max(-1.3, Math.min(1.3, pitch));
+    }
+  }
+}, {passive:true});
+
+function endLookTouch(e){
+  for(const t of e.changedTouches){
+    if(t.identifier===lookTouchId) lookTouchId=null;
+  }
+}
+lookZone.addEventListener('touchend', endLookTouch, {passive:true});
+lookZone.addEventListener('touchcancel', endLookTouch, {passive:true});
+
+/* ---------------- INPUT: JOYSTICK ---------------- */
+const joyStick = document.getElementById('joyStick');
+let joyTouchId=null, joyVec={x:0,y:0};
+const JOY_MAX = 46;
+
+joyZone.addEventListener('touchstart', e=>{
+  e.stopPropagation();
+  const t = e.changedTouches[0];
+  joyTouchId = t.identifier;
+  updateJoy(t);
+}, {passive:true});
+
+joyZone.addEventListener('touchmove', e=>{
+  e.stopPropagation();
+  for(const t of e.changedTouches){
+    if(t.identifier===joyTouchId) updateJoy(t);
+  }
+}, {passive:true});
+
+function updateJoy(t){
+  const r = joyZone.getBoundingClientRect();
+  const cx = r.left+r.width/2, cy = r.top+r.height/2;
+  let dx = t.clientX-cx, dy = t.clientY-cy;
+  const dist = Math.min(JOY_MAX, Math.hypot(dx,dy));
+  const ang = Math.atan2(dy,dx);
+  dx = Math.cos(ang)*dist; dy = Math.sin(ang)*dist;
+  joyStick.style.transform = `translate(${dx-28}px, ${dy-28}px)`;
+  joyVec.x = dx/JOY_MAX; joyVec.y = dy/JOY_MAX;
+}
+function resetJoy(e){
+  for(const t of e.changedTouches){
+    if(t.identifier===joyTouchId){
+      joyTouchId=null; joyVec.x=0; joyVec.y=0;
+      joyStick.style.transform = 'translate(-50%,-50%)';
+    }
+  }
+}
+joyZone.addEventListener('touchend', resetJoy, {passive:true});
+joyZone.addEventListener('touchcancel', resetJoy, {passive:true});
+
+/* ---------------- BUTTONS ---------------- */
+let flashOn=false;
+document.getElementById('flashlightBtn').addEventListener('click', ()=>{
+  flashOn = !flashOn;
+  flashlight.intensity = flashOn ? 2.2 : 0;
+  document.getElementById('flashlightBtn').classList.toggle('on', flashOn);
+});
+
+let sprintOn=false;
+const sprintBtn = document.getElementById('sprintBtn');
+sprintBtn.addEventListener('touchstart', e=>{e.stopPropagation(); sprintOn=true; sprintBtn.classList.add('on');}, {passive:true});
+sprintBtn.addEventListener('touchend', e=>{e.stopPropagation(); sprintOn=false; sprintBtn.classList.remove('on');}, {passive:true});
+sprintBtn.addEventListener('mousedown', ()=>sprintOn=true);
+window.addEventListener('mouseup', ()=>sprintOn=false);
+
+document.getElementById('muteBtn').addEventListener('click', ()=>{
+  audioOn = !audioOn;
+  document.getElementById('muteBtn').textContent = audioOn ? '🔊' : '🔇';
+  if(ambientNodes) ambientNodes.gain.gain.value = audioOn ? 0.05 : 0;
+});
+
+document.getElementById('exitBtn').addEventListener('click', ()=>{
+  document.getElementById('hud').classList.remove('active');
+  document.getElementById('startScreen').style.display='flex';
+  if(document.exitPointerLock) document.exitPointerLock();
+});
+
+/* ---------------- START ---------------- */
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  document.getElementById('startScreen').style.display='none';
+  document.getElementById('hud').classList.add('active');
+  startAmbient();
+  showMsg('لا نهاية لهذا المكان...');
+});
+
+let msgTimer=null;
+function showMsg(text){
+  const el = document.getElementById('msgLine');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(msgTimer);
+  msgTimer = setTimeout(()=>el.classList.remove('show'), 3200);
+}
+
+/* ---------------- MOVEMENT / COLLISION ---------------- */
+function tryMove(nx, nz){
+  // sample small ring around player for collision
+  const [gx0,gz0] = worldToGrid(nx, nz);
+  for(let dz=-1; dz<=1; dz++){
+    for(let dx=-1; dx<=1; dx++){
+      const gx=gx0+dx, gz=gz0+dz;
+      if(!isWallAt(gx,gz)) continue;
+      const [wx,wz] = gridToWorld(gx,gz);
+      const closeX = Math.max(wx-CELL/2, Math.min(nx, wx+CELL/2));
+      const closeZ = Math.max(wz-CELL/2, Math.min(nz, wz+CELL/2));
+      const dist = Math.hypot(nx-closeX, nz-closeZ);
+      if(dist < PLAYER_RADIUS) return false;
+    }
+  }
+  return true;
+}
+
+let batteryPct = 100;
+
+const clock = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.05, clock.getDelta());
+
+  // camera rotation
+  camera.rotation.order = 'YXZ';
+  camera.rotation.y = yaw;
+  camera.rotation.x = pitch;
+
+  // movement input: keyboard + joystick combine
+  let mx=0, mz=0;
+  if(keys['KeyW']||keys['ArrowUp']) mz -= 1;
+  if(keys['KeyS']||keys['ArrowDown']) mz += 1;
+  if(keys['KeyA']||keys['ArrowLeft']) mx -= 1;
+  if(keys['KeyD']||keys['ArrowRight']) mx += 1;
+  mx += joyVec.x;
+  mz += joyVec.y;
+
+  const len = Math.hypot(mx,mz);
+  if(len > 0.05){
+    mx/=len; mz/=len;
+    const speed = MOVE_SPEED * (sprintOn||keys['ShiftLeft'] ? SPRINT_MULT : 1) * Math.min(1,len);
+    const sinY = Math.sin(yaw), cosY = Math.cos(yaw);
+    const fx = -sinY, fz = -cosY; // forward
+    const rx = cosY, rz = -sinY; // right
+    const dxw = (fx*(-mz) + rx*mx) * speed * dt;
+    const dzw = (fz*(-mz) + rz*mx) * speed * dt;
+
+    const px = camera.position.x, pz = camera.position.z;
+    if(tryMove(px+dxw, pz)) camera.position.x += dxw;
+    if(tryMove(camera.position.x, pz+dzw)) camera.position.z += dzw;
+
+    if(flashOn){ batteryPct = Math.max(0, batteryPct - dt*0.35); }
+  }
+
+  // flicker fluorescent lights
+  const t = performance.now()*0.001;
+  for(const L of lights){
+    const flick = 0.75 + 0.25*Math.sin(t*7 + L.phase) + (Math.random()<0.01 ? -0.6 : 0);
+    const val = Math.max(0.15, Math.min(1, flick));
+    L.light.intensity = L.baseI * val;
+    if(L.mesh) L.mesh.material.color.setRGB(1, 0.95*val+0.05, 0.6*val+0.1);
+  }
+
+  if(flashOn) batteryPct = Math.max(0, batteryPct - dt*0.15);
+  document.getElementById('battery').textContent = `🔋 ${Math.round(batteryPct)}%`;
+  if(flashOn) flashlight.intensity = 2.2 * Math.max(0.15, batteryPct/100);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+})();
+</script>
 </body>
 </html>
-```
-
-## التعديلات اللي درت:
-
-### 🏠 **1. السقف الكحل الغامق:**
-- ✅ لون كحل غامق جداً (RGB 10-25)
-- ✅ إضاءة فلوريسنت صفراء ضعيفة
-- ✅ توهج الإضاءة على السقف
-
-### 📝 **2. "Souhail Alaoui" على الجدران:**
-- ✅ خط عريض (900 bold) وحجم كبير
-- ✅ لون أبيض/أصفر فاتح واضح
-- ✅ تكرار على كامل الجدار (4 صفوف × 2 أعمدة)
-- ✅ ظل للنص باش يبان مزيان
-- ✅ يتكرر بحال wallpaper
-
-### 📱 **3. تحكم الهاتف:**
-- ✅ **أزرار الأسهم على اليسار:**
-  - ▲ للأمام (W)
-  - ▼ للخلف (S)
-  - ◀ دوران يسار
-  - ▶ دوران يمين
-- ✅ **منطقة لمس على اليمين:** Swipe للنظر
-- ✅ أزرار شفافة (background 10% opacity)
-- ✅ يعمل تلقائياً على الهاتف
-
-**انسخ الكود وحطو فملف `index.html` ورفعو لـ GitHub Pages!** 🎮
