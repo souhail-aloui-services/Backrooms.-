@@ -1,15 +1,15 @@
-```html
 <!DOCTYPE html>
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Backrooms - 3D Horror</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>The Backrooms - Souhail Alaoui Edition</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            touch-action: none;
         }
         
         body {
@@ -150,13 +150,135 @@
             z-index: 40;
             background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%);
         }
+        
+        /* ===== تحكم الهاتف ===== */
+        #mobileControls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 150;
+            display: none;
+        }
+        
+        /* Joystick للحركة */
+        #moveJoystick {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            width: 120px;
+            height: 120px;
+            pointer-events: auto;
+            touch-action: none;
+        }
+        
+        #moveJoystickBase {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(255, 255, 0, 0.3);
+            border-radius: 50%;
+            background: rgba(255, 255, 0, 0.05);
+        }
+        
+        #moveJoystickKnob {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            top: 35px;
+            left: 35px;
+            background: rgba(255, 255, 0, 0.4);
+            border: 2px solid rgba(255, 255, 0, 0.8);
+            border-radius: 50%;
+            transition: transform 0.05s;
+        }
+        
+        /* Joystick للنظر */
+        #lookJoystick {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            width: 120px;
+            height: 120px;
+            pointer-events: auto;
+            touch-action: none;
+        }
+        
+        #lookJoystickBase {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        #lookJoystickKnob {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            top: 35px;
+            left: 35px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            transition: transform 0.05s;
+        }
+        
+        /* زر الجري */
+        #runButton {
+            position: absolute;
+            bottom: 200px;
+            left: 50px;
+            width: 80px;
+            height: 80px;
+            pointer-events: auto;
+            border: 3px solid rgba(255, 100, 0, 0.4);
+            border-radius: 50%;
+            background: rgba(255, 100, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 150, 0, 0.8);
+            font-size: 14px;
+            font-weight: bold;
+            user-select: none;
+        }
+        
+        #runButton.active {
+            background: rgba(255, 100, 0, 0.3);
+            border-color: rgba(255, 100, 0, 0.8);
+        }
+        
+        /* تسميات */
+        .joystickLabel {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            text-align: center;
+            width: 100%;
+            top: -25px;
+        }
+        
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: block;
+            }
+            #instructions {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="startScreen">
         <h1>THE BACKROOMS</h1>
+        <p>Souhail Alaoui Edition</p>
         <p>Level 0 - The Lobby</p>
-        <p>استخدم WASD للحركة | الماوس للنظر | ESC للخروج</p>
+        <p id="desktopInstr">استخدم WASD للحركة | الماوس للنظر | SHIFT للجري</p>
+        <p id="mobileInstr" style="display:none">استخدم Joystick للحركة والنظر</p>
         <button id="startBtn">ادخل للـ Backrooms</button>
     </div>
     
@@ -167,11 +289,39 @@
         <div id="crosshair"></div>
         <div id="instructions">WASD: حركة | SHIFT: جري | MOUSE: نظر</div>
     </div>
+    
+    <!-- تحكم الهاتف -->
+    <div id="mobileControls">
+        <!-- Joystick الحركة -->
+        <div id="moveJoystick">
+            <div class="joystickLabel">MOVE</div>
+            <div id="moveJoystickBase"></div>
+            <div id="moveJoystickKnob"></div>
+        </div>
+        
+        <!-- زر الجري -->
+        <div id="runButton">RUN</div>
+        
+        <!-- Joystick النظر -->
+        <div id="lookJoystick">
+            <div class="joystickLabel">LOOK</div>
+            <div id="lookJoystickBase"></div>
+            <div id="lookJoystickKnob"></div>
+        </div>
+    </div>
 
     <script>
         // ===== إعدادات اللعبة =====
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        
+        // كشف الهاتف
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            document.getElementById('desktopInstr').style.display = 'none';
+            document.getElementById('mobileInstr').style.display = 'block';
+        }
         
         // حجم الشاشة
         canvas.width = window.innerWidth;
@@ -192,8 +342,15 @@
         const FOV = Math.PI / 3;
         const renderDistance = 20;
         
-        // حالة المفاتيح
+        // حالة المفاتيح والتحكم
         const keys = {};
+        const mobileInput = {
+            moveX: 0,
+            moveY: 0,
+            lookX: 0,
+            lookY: 0,
+            running: false
+        };
         
         // خريطة Backrooms (1 = جدار، 0 = فراغ)
         const map = [
@@ -222,15 +379,15 @@
         const mapWidth = map[0].length;
         const mapHeight = map.length;
         
-        // ===== صوت Backrooms (Buzzing) =====
+        // ===== صوت Backrooms =====
         let audioContext;
         let buzzingSound;
-        let footstepSound;
+        let lastFootstep = 0;
+        let isMoving = false;
         
         function initAudio() {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             
-            // صوت الطنين المستمر
             function createBuzzing() {
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
@@ -250,7 +407,6 @@
                 
                 oscillator.start();
                 
-                // تأثير التذبذب العشوائي
                 setInterval(() => {
                     const variation = Math.random() * 10 - 5;
                     oscillator.frequency.value = 50 + variation;
@@ -282,7 +438,7 @@
             oscillator.stop(audioContext.currentTime + 0.1);
         }
         
-        // ===== نظام Raycasting =====
+        // ===== نظام Raycasting مع السقف والكتابة =====
         function castRay(angle) {
             const sin = Math.sin(angle);
             const cos = Math.cos(angle);
@@ -291,7 +447,7 @@
             let hit = false;
             let hitX = 0;
             let hitY = 0;
-            let side = 0; // 0 = horizontal, 1 = vertical
+            let side = 0;
             
             const stepX = cos > 0 ? 1 : -1;
             const stepY = sin > 0 ? 1 : -1;
@@ -334,66 +490,138 @@
             return { distance, side, hitX, hitY };
         }
         
-        // ===== رسم الإطار =====
-        let lastFootstep = 0;
-        let isMoving = false;
+        // ===== رسم نص "Souhail Alaoui" على الجدار =====
+        function drawWallText(ctx, x, y, width, height, brightness, side) {
+            const text = "Souhail Alaoui";
+            const fontSize = Math.min(width / 8, height / 3);
+            
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x, y, width, height);
+            ctx.clip();
+            
+            // تكرار النص على الجدار
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const textColor = side === 1 ? 
+                `rgba(255, 255, 200, ${brightness * 0.9})` : 
+                `rgba(255, 255, 255, ${brightness * 0.95})`;
+            
+            ctx.fillStyle = textColor;
+            ctx.shadowColor = 'rgba(255, 255, 0, 0.5)';
+            ctx.shadowBlur = 5;
+            
+            // رسم النص متكرر
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < 2; col++) {
+                    const textX = x + width * (col + 0.5) / 2;
+                    const textY = y + height * (row + 0.5) / 3;
+                    ctx.fillText(text, textX, textY);
+                }
+            }
+            
+            ctx.restore();
+        }
         
+        // ===== رسم السقف =====
+        function drawCeiling(ctx) {
+            const ceilingHeight = canvas.height / 2;
+            
+            // تدرج السقف الأصفر
+            for (let y = 0; y < ceilingHeight; y++) {
+                const progress = y / ceilingHeight;
+                const r = Math.floor(40 - progress * 20);
+                const g = Math.floor(40 - progress * 20);
+                const b = Math.floor(20 - progress * 10);
+                
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                ctx.fillRect(0, y, canvas.width, 1);
+            }
+            
+            // خطوط السقف (الإضاءة الفلوريسنت)
+            const lightSpacing = canvas.width / 4;
+            for (let i = 0; i < 5; i++) {
+                const lightX = i * lightSpacing + lightSpacing / 2;
+                const lightWidth = 40;
+                
+                // توهج الإضاءة
+                const gradient = ctx.createLinearGradient(lightX - lightWidth, 0, lightX + lightWidth, 0);
+                gradient.addColorStop(0, 'rgba(255, 255, 200, 0)');
+                gradient.addColorStop(0.5, 'rgba(255, 255, 200, 0.15)');
+                gradient.addColorStop(1, 'rgba(255, 255, 200, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(lightX - lightWidth * 3, 0, lightWidth * 6, ceilingHeight * 0.7);
+            }
+        }
+        
+        // ===== رسم الإطار =====
         function render() {
-            // خلفية صفراء داكنة
-            ctx.fillStyle = '#1a1a0a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // السقف
+            drawCeiling(ctx);
             
-            // سقف أصفر فاتح
-            const gradientCeiling = ctx.createLinearGradient(0, 0, 0, canvas.height / 2);
-            gradientCeiling.addColorStop(0, '#2a2a1a');
-            gradientCeiling.addColorStop(1, '#1a1a0a');
-            ctx.fillStyle = gradientCeiling;
-            ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
-            
-            // أرضية سجاد صفراء
+            // الأرضية
             const gradientFloor = ctx.createLinearGradient(0, canvas.height / 2, 0, canvas.height);
             gradientFloor.addColorStop(0, '#1a1a0a');
             gradientFloor.addColorStop(1, '#3a3a1a');
             ctx.fillStyle = gradientFloor;
             ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
             
-            // رسم الأعمدة (Raycasting)
-            const numRays = canvas.width / 2;
+            // رسم الجدران
+            const numRays = Math.min(canvas.width / 2, 400);
             const angleStep = FOV / numRays;
             
             for (let i = 0; i < numRays; i++) {
                 const rayAngle = player.angle - FOV / 2 + i * angleStep;
                 const ray = castRay(rayAngle);
                 
-                // تصحيح انحناء الأسماك
                 const correctedDistance = ray.distance * Math.cos(rayAngle - player.angle);
                 
                 if (ray.distance < renderDistance) {
                     const wallHeight = canvas.height / correctedDistance;
                     const wallTop = (canvas.height - wallHeight) / 2;
+                    const stripWidth = canvas.width / numRays;
                     
-                    // لون الجدار حسب البعد والإضاءة
-                    const brightness = Math.max(0.1, 1 - ray.distance / renderDistance);
-                    const yellowIntensity = Math.floor(100 + brightness * 155);
+                    // لون الجدار الأساسي
+                    const brightness = Math.max(0.15, 1 - ray.distance / renderDistance);
+                    const yellowIntensity = Math.floor(80 + brightness * 100);
                     
-                    // تأثير الإضاءة الخافتة
-                    let wallColor;
+                    let baseColor;
                     if (ray.side === 1) {
-                        wallColor = `rgb(${yellowIntensity * 0.7}, ${yellowIntensity * 0.7}, ${yellowIntensity * 0.2})`;
+                        baseColor = `rgb(${yellowIntensity * 0.6}, ${yellowIntensity * 0.6}, ${yellowIntensity * 0.15})`;
                     } else {
-                        wallColor = `rgb(${yellowIntensity}, ${yellowIntensity}, ${yellowIntensity * 0.3})`;
+                        baseColor = `rgb(${yellowIntensity * 0.8}, ${yellowIntensity * 0.8}, ${yellowIntensity * 0.25})`;
                     }
                     
-                    // رسم شريط الجدار
-                    const stripWidth = canvas.width / numRays;
-                    ctx.fillStyle = wallColor;
+                    // رسم الجدار
+                    ctx.fillStyle = baseColor;
                     ctx.fillRect(i * stripWidth, wallTop, stripWidth + 1, wallHeight);
                     
-                    // نمط ورق الجدران (خطوط رأسية)
-                    if (i % 4 === 0) {
-                        ctx.fillStyle = `rgba(0, 0, 0, ${0.1 * brightness})`;
+                    // رسم نمط ورق الجدران
+                    if (i % 3 === 0) {
+                        ctx.fillStyle = `rgba(0, 0, 0, ${0.08 * brightness})`;
                         ctx.fillRect(i * stripWidth, wallTop, stripWidth + 1, wallHeight);
                     }
+                    
+                    // رسم الكتابة "Souhail Alaoui" على الجدران القريبة
+                    if (ray.distance < 12 && i % 15 === 0) {
+                        drawWallText(
+                            ctx, 
+                            i * stripWidth - 20, 
+                            wallTop + wallHeight * 0.2, 
+                            stripWidth * 15, 
+                            wallHeight * 0.6,
+                            brightness,
+                            ray.side
+                        );
+                    }
+                    
+                    // ظل الجدار
+                    const shadowIntensity = ray.side === 1 ? 0.3 : 0.1;
+                    ctx.fillStyle = `rgba(0, 0, 0, ${shadowIntensity})`;
+                    ctx.fillRect(i * stripWidth, wallTop, stripWidth + 1, wallHeight);
                 }
             }
             
@@ -403,7 +631,7 @@
                 canvas.width / 2, canvas.height / 2, canvas.width
             );
             fogGradient.addColorStop(0, 'rgba(0,0,0,0)');
-            fogGradient.addColorStop(1, 'rgba(20,20,0,0.5)');
+            fogGradient.addColorStop(1, 'rgba(20,20,0,0.4)');
             ctx.fillStyle = fogGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
@@ -414,27 +642,193 @@
             }
         }
         
-        // ===== التحكم =====
+        // ===== تحديث اللاعب =====
+        function updatePlayer() {
+            isMoving = false;
+            
+            let moveX = 0;
+            let moveY = 0;
+            
+            // تحكم الكيبورد
+            if (keys['w']) moveY -= 1;
+            if (keys['s']) moveY += 1;
+            if (keys['a']) moveX -= 1;
+            if (keys['d']) moveY += 1;
+            
+            // تحكم الجويستيك
+            moveX += mobileInput.moveX;
+            moveY += mobileInput.moveY;
+            
+            // تطبيع الحركة
+            const length = Math.sqrt(moveX * moveX + moveY * moveY);
+            if (length > 1) {
+                moveX /= length;
+                moveY /= length;
+            }
+            
+            // الجري
+            const speed = (keys['shift'] || mobileInput.running) ? player.runSpeed : player.speed;
+            
+            // حساب الحركة
+            const forwardX = Math.cos(player.angle) * moveY * speed;
+            const forwardY = Math.sin(player.angle) * moveY * speed;
+            const strafeX = Math.cos(player.angle + Math.PI/2) * moveX * speed;
+            const strafeY = Math.sin(player.angle + Math.PI/2) * moveX * speed;
+            
+            const newX = player.x + forwardX + strafeX;
+            const newY = player.y + forwardY + strafeY;
+            
+            // التحقق من التصادم
+            if (map[Math.floor(player.y)][Math.floor(newX)] === 0) {
+                player.x = newX;
+            }
+            if (map[Math.floor(newY)][Math.floor(player.x)] === 0) {
+                player.y = newY;
+            }
+            
+            if (moveX !== 0 || moveY !== 0) {
+                isMoving = true;
+            }
+            
+            // النظر بالجويستيك
+            player.angle += mobileInput.lookX * 0.02;
+        }
+        
+        // ===== تحكم الهاتف =====
+        function setupMobileControls() {
+            // Joystick الحركة
+            const moveJoystick = document.getElementById('moveJoystick');
+            const moveKnob = document.getElementById('moveJoystickKnob');
+            let moveTouchId = null;
+            let moveCenterX = 0;
+            let moveCenterY = 0;
+            
+            moveJoystick.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                moveTouchId = touch.identifier;
+                const rect = moveJoystick.getBoundingClientRect();
+                moveCenterX = rect.left + rect.width / 2;
+                moveCenterY = rect.top + rect.height / 2;
+            }, { passive: false });
+            
+            moveJoystick.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === moveTouchId) {
+                        const touch = e.changedTouches[i];
+                        const dx = touch.clientX - moveCenterX;
+                        const dy = touch.clientY - moveCenterY;
+                        const distance = Math.min(Math.sqrt(dx * dx + dy * dy), 35);
+                        const angle = Math.atan2(dy, dx);
+                        
+                        const knobX = Math.cos(angle) * distance;
+                        const knobY = Math.sin(angle) * distance;
+                        
+                        moveKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+                        
+                        mobileInput.moveX = knobX / 35;
+                        mobileInput.moveY = knobY / 35;
+                        break;
+                    }
+                }
+            }, { passive: false });
+            
+            moveJoystick.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === moveTouchId) {
+                        moveTouchId = null;
+                        moveKnob.style.transform = 'translate(0, 0)';
+                        mobileInput.moveX = 0;
+                        mobileInput.moveY = 0;
+                        break;
+                    }
+                }
+            }, { passive: false });
+            
+            // Joystick النظر
+            const lookJoystick = document.getElementById('lookJoystick');
+            const lookKnob = document.getElementById('lookJoystickKnob');
+            let lookTouchId = null;
+            let lookCenterX = 0;
+            let lookCenterY = 0;
+            
+            lookJoystick.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                lookTouchId = touch.identifier;
+                const rect = lookJoystick.getBoundingClientRect();
+                lookCenterX = rect.left + rect.width / 2;
+                lookCenterY = rect.top + rect.height / 2;
+            }, { passive: false });
+            
+            lookJoystick.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === lookTouchId) {
+                        const touch = e.changedTouches[i];
+                        const dx = touch.clientX - lookCenterX;
+                        const dy = touch.clientY - lookCenterY;
+                        const distance = Math.min(Math.sqrt(dx * dx + dy * dy), 35);
+                        const angle = Math.atan2(dy, dx);
+                        
+                        const knobX = Math.cos(angle) * distance;
+                        const knobY = Math.sin(angle) * distance;
+                        
+                        lookKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+                        
+                        mobileInput.lookX = knobX / 35;
+                        mobileInput.lookY = knobY / 35;
+                        break;
+                    }
+                }
+            }, { passive: false });
+            
+            lookJoystick.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === lookTouchId) {
+                        lookTouchId = null;
+                        lookKnob.style.transform = 'translate(0, 0)';
+                        mobileInput.lookX = 0;
+                        mobileInput.lookY = 0;
+                        break;
+                    }
+                }
+            }, { passive: false });
+            
+            // زر الجري
+            const runButton = document.getElementById('runButton');
+            runButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                mobileInput.running = true;
+                runButton.classList.add('active');
+            }, { passive: false });
+            
+            runButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                mobileInput.running = false;
+                runButton.classList.remove('active');
+            }, { passive: false });
+        }
+        
+        // ===== تحكم الكيبورد =====
         document.addEventListener('keydown', (e) => {
             keys[e.key.toLowerCase()] = true;
-            if (e.key === 'Shift') {
-                player.currentSpeed = player.runSpeed;
-            }
+            if (e.key === 'Shift') player.currentSpeed = player.runSpeed;
         });
         
         document.addEventListener('keyup', (e) => {
             keys[e.key.toLowerCase()] = false;
-            if (e.key === 'Shift') {
-                player.currentSpeed = player.speed;
-            }
+            if (e.key === 'Shift') player.currentSpeed = player.speed;
         });
         
         // التحكم بالماوس
-        let mouseX = 0;
         let isPointerLocked = false;
         
         canvas.addEventListener('click', () => {
-            if (!isPointerLocked) {
+            if (!isPointerLocked && !isMobile) {
                 canvas.requestPointerLock();
             }
         });
@@ -444,36 +838,10 @@
         });
         
         document.addEventListener('mousemove', (e) => {
-            if (isPointerLocked) {
+            if (isPointerLocked && !isMobile) {
                 player.angle += e.movementX * 0.002;
             }
         });
-        
-        // ===== تحديث اللاعب =====
-        function updatePlayer() {
-            isMoving = false;
-            
-            const moveSpeed = player.currentSpeed;
-            const newX = player.x + (keys['d'] ? Math.cos(player.angle + Math.PI/2) * moveSpeed : 0) 
-                                - (keys['a'] ? Math.cos(player.angle + Math.PI/2) * moveSpeed : 0)
-                                + (keys['w'] ? Math.cos(player.angle) * moveSpeed : 0)
-                                - (keys['s'] ? Math.cos(player.angle) * moveSpeed : 0);
-            
-            const newY = player.y + (keys['d'] ? Math.sin(player.angle + Math.PI/2) * moveSpeed : 0)
-                                - (keys['a'] ? Math.sin(player.angle + Math.PI/2) * moveSpeed : 0)
-                                + (keys['w'] ? Math.sin(player.angle) * moveSpeed : 0)
-                                - (keys['s'] ? Math.sin(player.angle) * moveSpeed : 0);
-            
-            // التحقق من الاصطدام
-            if (map[Math.floor(newY)][Math.floor(player.x)] === 0) {
-                player.y = newY;
-                isMoving = true;
-            }
-            if (map[Math.floor(player.y)][Math.floor(newX)] === 0) {
-                player.x = newX;
-                isMoving = true;
-            }
-        }
         
         // ===== حلقة اللعبة =====
         function gameLoop() {
@@ -486,7 +854,12 @@
         document.getElementById('startBtn').addEventListener('click', () => {
             document.getElementById('startScreen').style.display = 'none';
             initAudio();
-            canvas.requestPointerLock();
+            
+            if (!isMobile) {
+                canvas.requestPointerLock();
+            }
+            
+            setupMobileControls();
             gameLoop();
         });
         
