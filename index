@@ -1,0 +1,529 @@
+هاي لك كود لعبة Backrooms 3D كاملة تشتغل فالمتصفح مباشرة:
+
+```html
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Backrooms - 3D Horror</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #gameCanvas {
+            display: block;
+            cursor: none;
+        }
+        
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 0, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 0, 0.5);
+        }
+        
+        #crosshair::before {
+            width: 2px;
+            height: 10px;
+            top: 5px;
+            left: 9px;
+        }
+        
+        #crosshair::after {
+            width: 10px;
+            height: 2px;
+            top: 9px;
+            left: 5px;
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #ff0;
+            font-size: 14px;
+            text-shadow: 0 0 10px #ff0;
+            opacity: 0.7;
+        }
+        
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a0a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            cursor: default;
+        }
+        
+        #startScreen h1 {
+            color: #ff0;
+            font-size: 48px;
+            text-shadow: 0 0 20px #ff0;
+            margin-bottom: 20px;
+            animation: flicker 2s infinite;
+        }
+        
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+            75% { opacity: 0.9; }
+        }
+        
+        #startScreen p {
+            color: #cc0;
+            font-size: 18px;
+            margin: 10px;
+            text-align: center;
+        }
+        
+        #startBtn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #ff0;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        #startBtn:hover {
+            background: #cc0;
+            box-shadow: 0 0 20px #ff0;
+        }
+        
+        #noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.03;
+            z-index: 50;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+        
+        #vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 40;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%);
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1>THE BACKROOMS</h1>
+        <p>Level 0 - The Lobby</p>
+        <p>استخدم WASD للحركة | الماوس للنظر | ESC للخروج</p>
+        <button id="startBtn">ادخل للـ Backrooms</button>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+    <div id="noise"></div>
+    <div id="vignette"></div>
+    <div id="ui">
+        <div id="crosshair"></div>
+        <div id="instructions">WASD: حركة | SHIFT: جري | MOUSE: نظر</div>
+    </div>
+
+    <script>
+        // ===== إعدادات اللعبة =====
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // حجم الشاشة
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // إعدادات اللاعب
+        const player = {
+            x: 2.5,
+            y: 2.5,
+            angle: 0,
+            height: 0.5,
+            speed: 0.03,
+            runSpeed: 0.06,
+            currentSpeed: 0.03
+        };
+        
+        // إعدادات الرؤية
+        const FOV = Math.PI / 3;
+        const renderDistance = 20;
+        
+        // حالة المفاتيح
+        const keys = {};
+        
+        // خريطة Backrooms (1 = جدار، 0 = فراغ)
+        const map = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,1,1,0,0,1,1,1,1,0,0,1,1,1,0,0,1],
+            [1,0,0,1,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,1,0,0,1,1,1,1,1,1,0,0,1,1,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
+            [1,0,0,1,1,1,0,0,1,1,1,1,0,0,1,1,1,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,1,1,0,0,1,1,0,0,1,1,1,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+        
+        const mapWidth = map[0].length;
+        const mapHeight = map.length;
+        
+        // ===== صوت Backrooms (Buzzing) =====
+        let audioContext;
+        let buzzingSound;
+        let footstepSound;
+        
+        function initAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // صوت الطنين المستمر
+            function createBuzzing() {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                const filter = audioContext.createBiquadFilter();
+                
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.value = 50;
+                
+                filter.type = 'lowpass';
+                filter.frequency.value = 200;
+                
+                gainNode.gain.value = 0.05;
+                
+                oscillator.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                
+                // تأثير التذبذب العشوائي
+                setInterval(() => {
+                    const variation = Math.random() * 10 - 5;
+                    oscillator.frequency.value = 50 + variation;
+                    gainNode.gain.value = 0.03 + Math.random() * 0.03;
+                }, 100);
+                
+                return { oscillator, gainNode };
+            }
+            
+            buzzingSound = createBuzzing();
+        }
+        
+        function playFootstep() {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'triangle';
+            oscillator.frequency.value = 80 + Math.random() * 40;
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+        
+        // ===== نظام Raycasting =====
+        function castRay(angle) {
+            const sin = Math.sin(angle);
+            const cos = Math.cos(angle);
+            
+            let distance = 0;
+            let hit = false;
+            let hitX = 0;
+            let hitY = 0;
+            let side = 0; // 0 = horizontal, 1 = vertical
+            
+            const stepX = cos > 0 ? 1 : -1;
+            const stepY = sin > 0 ? 1 : -1;
+            
+            let mapX = Math.floor(player.x);
+            let mapY = Math.floor(player.y);
+            
+            const deltaDistX = Math.abs(1 / cos);
+            const deltaDistY = Math.abs(1 / sin);
+            
+            let sideDistX = (cos > 0 ? mapX + 1 - player.x : player.x - mapX) * deltaDistX;
+            let sideDistY = (sin > 0 ? mapY + 1 - player.y : player.y - mapY) * deltaDistY;
+            
+            while (!hit && distance < renderDistance) {
+                if (sideDistX < sideDistY) {
+                    sideDistX += deltaDistX;
+                    mapX += stepX;
+                    side = 0;
+                } else {
+                    sideDistY += deltaDistY;
+                    mapY += stepY;
+                    side = 1;
+                }
+                
+                if (mapX < 0 || mapX >= mapWidth || mapY < 0 || mapY >= mapHeight) {
+                    hit = true;
+                    distance = renderDistance;
+                } else if (map[mapY][mapX] === 1) {
+                    hit = true;
+                    hitX = mapX;
+                    hitY = mapY;
+                    if (side === 0) {
+                        distance = (mapX - player.x + (1 - stepX) / 2) / cos;
+                    } else {
+                        distance = (mapY - player.y + (1 - stepY) / 2) / sin;
+                    }
+                }
+            }
+            
+            return { distance, side, hitX, hitY };
+        }
+        
+        // ===== رسم الإطار =====
+        let lastFootstep = 0;
+        let isMoving = false;
+        
+        function render() {
+            // خلفية صفراء داكنة
+            ctx.fillStyle = '#1a1a0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // سقف أصفر فاتح
+            const gradientCeiling = ctx.createLinearGradient(0, 0, 0, canvas.height / 2);
+            gradientCeiling.addColorStop(0, '#2a2a1a');
+            gradientCeiling.addColorStop(1, '#1a1a0a');
+            ctx.fillStyle = gradientCeiling;
+            ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+            
+            // أرضية سجاد صفراء
+            const gradientFloor = ctx.createLinearGradient(0, canvas.height / 2, 0, canvas.height);
+            gradientFloor.addColorStop(0, '#1a1a0a');
+            gradientFloor.addColorStop(1, '#3a3a1a');
+            ctx.fillStyle = gradientFloor;
+            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+            
+            // رسم الأعمدة (Raycasting)
+            const numRays = canvas.width / 2;
+            const angleStep = FOV / numRays;
+            
+            for (let i = 0; i < numRays; i++) {
+                const rayAngle = player.angle - FOV / 2 + i * angleStep;
+                const ray = castRay(rayAngle);
+                
+                // تصحيح انحناء الأسماك
+                const correctedDistance = ray.distance * Math.cos(rayAngle - player.angle);
+                
+                if (ray.distance < renderDistance) {
+                    const wallHeight = canvas.height / correctedDistance;
+                    const wallTop = (canvas.height - wallHeight) / 2;
+                    
+                    // لون الجدار حسب البعد والإضاءة
+                    const brightness = Math.max(0.1, 1 - ray.distance / renderDistance);
+                    const yellowIntensity = Math.floor(100 + brightness * 155);
+                    
+                    // تأثير الإضاءة الخافتة
+                    let wallColor;
+                    if (ray.side === 1) {
+                        wallColor = `rgb(${yellowIntensity * 0.7}, ${yellowIntensity * 0.7}, ${yellowIntensity * 0.2})`;
+                    } else {
+                        wallColor = `rgb(${yellowIntensity}, ${yellowIntensity}, ${yellowIntensity * 0.3})`;
+                    }
+                    
+                    // رسم شريط الجدار
+                    const stripWidth = canvas.width / numRays;
+                    ctx.fillStyle = wallColor;
+                    ctx.fillRect(i * stripWidth, wallTop, stripWidth + 1, wallHeight);
+                    
+                    // نمط ورق الجدران (خطوط رأسية)
+                    if (i % 4 === 0) {
+                        ctx.fillStyle = `rgba(0, 0, 0, ${0.1 * brightness})`;
+                        ctx.fillRect(i * stripWidth, wallTop, stripWidth + 1, wallHeight);
+                    }
+                }
+            }
+            
+            // تأثير الضباب
+            const fogGradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, canvas.width
+            );
+            fogGradient.addColorStop(0, 'rgba(0,0,0,0)');
+            fogGradient.addColorStop(1, 'rgba(20,20,0,0.5)');
+            ctx.fillStyle = fogGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // صوت الخطوات
+            if (isMoving && Date.now() - lastFootstep > 400) {
+                playFootstep();
+                lastFootstep = Date.now();
+            }
+        }
+        
+        // ===== التحكم =====
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key === 'Shift') {
+                player.currentSpeed = player.runSpeed;
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+            if (e.key === 'Shift') {
+                player.currentSpeed = player.speed;
+            }
+        });
+        
+        // التحكم بالماوس
+        let mouseX = 0;
+        let isPointerLocked = false;
+        
+        canvas.addEventListener('click', () => {
+            if (!isPointerLocked) {
+                canvas.requestPointerLock();
+            }
+        });
+        
+        document.addEventListener('pointerlockchange', () => {
+            isPointerLocked = document.pointerLockElement === canvas;
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (isPointerLocked) {
+                player.angle += e.movementX * 0.002;
+            }
+        });
+        
+        // ===== تحديث اللاعب =====
+        function updatePlayer() {
+            isMoving = false;
+            
+            const moveSpeed = player.currentSpeed;
+            const newX = player.x + (keys['d'] ? Math.cos(player.angle + Math.PI/2) * moveSpeed : 0) 
+                                - (keys['a'] ? Math.cos(player.angle + Math.PI/2) * moveSpeed : 0)
+                                + (keys['w'] ? Math.cos(player.angle) * moveSpeed : 0)
+                                - (keys['s'] ? Math.cos(player.angle) * moveSpeed : 0);
+            
+            const newY = player.y + (keys['d'] ? Math.sin(player.angle + Math.PI/2) * moveSpeed : 0)
+                                - (keys['a'] ? Math.sin(player.angle + Math.PI/2) * moveSpeed : 0)
+                                + (keys['w'] ? Math.sin(player.angle) * moveSpeed : 0)
+                                - (keys['s'] ? Math.sin(player.angle) * moveSpeed : 0);
+            
+            // التحقق من الاصطدام
+            if (map[Math.floor(newY)][Math.floor(player.x)] === 0) {
+                player.y = newY;
+                isMoving = true;
+            }
+            if (map[Math.floor(player.y)][Math.floor(newX)] === 0) {
+                player.x = newX;
+                isMoving = true;
+            }
+        }
+        
+        // ===== حلقة اللعبة =====
+        function gameLoop() {
+            updatePlayer();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // ===== بدء اللعبة =====
+        document.getElementById('startBtn').addEventListener('click', () => {
+            document.getElementById('startScreen').style.display = 'none';
+            initAudio();
+            canvas.requestPointerLock();
+            gameLoop();
+        });
+        
+        // تغيير حجم النافذة
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
+```
+
+## خاصيات اللعبة:
+
+### 🎮 **التحكم:**
+- **WASD** - الحركة
+- **Shift** - الجري
+- **الماوس** - النظر حولك
+- **ESC** - الخروج من وضع التحكم بالماوس
+
+### 🎨 **البيئة:**
+- ✅ ممرات صفراء كلاسيكية (Backrooms)
+- ✅ إضاءة خافتة مع تأثير الضباب
+- ✅ نمط ورق الجدران المميز
+- ✅ سقف وسجاد أصفر
+
+### 🔊 **الصوت:**
+- ✅ صوت الطنين المستمر (Buzzing)
+- ✅ صوت خطوات عند المشي
+
+### 💻 **التقنية:**
+- ✅ Raycasting 3D من الصفر
+- ✅ لا تحتاج مكتبات خارجية
+- ✅ تشتغل مباشرة في المتصفح
+- ✅ أداء سلس
+
+**انسخ الكود وحطو فملف `.html` وفتحو فأي متصفح!** 🎮
