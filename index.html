@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>BACKROOMS — SOUHAIL ALAOUI</title>
+<title>BACKROOMS — SOUHAIL ALAOUI v2.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Rubik:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -13,6 +13,7 @@
     --black:#050503;
     --panel:rgba(10,9,4,0.72);
     --danger:#e8c400;
+    --blue:#00aaff;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;}
   html,body{
@@ -22,196 +23,29 @@
   }
   #renderCanvas{position:fixed; inset:0; display:block; width:100%; height:100%;}
 
-  /* ---------- START SCREEN ---------- */
-  #startScreen{
-    position:fixed; inset:0; z-index:50;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background:
-      radial-gradient(ellipse at 50% 20%, rgba(232,196,0,0.10), transparent 60%),
-      repeating-linear-gradient(0deg, #0a0900 0px, #0a0900 2px, #060502 2px, #060502 4px),
-      #050400;
-    gap:16px; text-align:center; padding:24px;
-  }
-  .brandStripe{
-    width:100%; height:10px;
-    background:repeating-linear-gradient(135deg, var(--yellow) 0 18px, #000 18px 36px);
-    opacity:0.85;
-  }
-  #startScreen .brandStripe.bottom{position:absolute; bottom:0; left:0;}
-  #startScreen .brandStripe.top{position:absolute; top:0; left:0;}
-  .logoWrap{position:relative;}
-  .glitchTitle{
-    font-family:'Archivo Black', sans-serif;
-    font-size:clamp(38px, 11vw, 90px);
-    letter-spacing:2px;
-    color:var(--yellow);
-    text-shadow:0 0 18px rgba(232,196,0,0.55), 0 0 60px rgba(232,196,0,0.25);
-    position:relative;
-    animation:flicker 3.2s infinite;
-    line-height:0.95;
-  }
-  .glitchTitle span{display:block; font-size:0.30em; letter-spacing:8px; color:#fff2b0; margin-top:10px; font-family:'Rubik',sans-serif; font-weight:900;}
-  @keyframes flicker{
-    0%,19%,21%,23%,80%,100%{opacity:1;}
-    20%{opacity:0.35;}
-    22%{opacity:0.85;}
-    79%{opacity:0.5;}
-  }
-  .devTag{
-    font-weight:900; font-size:clamp(13px,3.4vw,17px); letter-spacing:3px;
-    color:#000; background:var(--yellow); padding:6px 16px; border-radius:2px;
-    box-shadow:0 0 24px rgba(232,196,0,0.45);
-    font-family:'Rubik',sans-serif;
-  }
-  .devTag::before{content:"< "; opacity:0.6;}
-  .devTag::after{content:" />"; opacity:0.6;}
-  #playBtn{
-    margin-top:6px;
-    font-family:'Archivo Black',sans-serif;
-    font-size:clamp(20px,5vw,28px);
-    color:#000; background:var(--yellow);
-    border:none; padding:16px 52px; border-radius:6px;
-    letter-spacing:3px; cursor:pointer;
-    box-shadow:0 0 0 3px #000 inset, 0 8px 0 #6b5c00, 0 12px 30px rgba(232,196,0,0.35);
-    transform:translateY(0); transition:transform .08s;
-  }
-  #playBtn:active{transform:translateY(6px); box-shadow:0 0 0 3px #000 inset, 0 2px 0 #6b5c00;}
-  .hint{font-size:12.5px; color:#b7a54a; max-width:360px; line-height:1.7; font-weight:500;}
-  .hint b{color:var(--yellow);}
-  .objective{font-size:13px; color:#ff9d5a; max-width:360px; line-height:1.7; font-weight:700;}
+  /*... كل الـ CSS القديم ديالك خليه كما هو... */
+  /* زيد غير هادو الجداد */
+ .sanityWrap{position:absolute; top:calc(32px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); width:190px;}
+ .sanityBarBg{width:100%; height:10px; border:2px solid var(--blue); border-radius:6px; background:rgba(0,0,0,0.5); overflow:hidden;}
+ .sanityBarFill{height:100%; width:100%; background:linear-gradient(90deg,#0044ff,#00aaff); transition:width.2s;}
+ .sanityLabel{text-align:center; font-size:10px; letter-spacing:2px; color:#a0dfff; margin-top:2px; font-weight:700;}
 
-  /* ---------- HUD / IN-GAME UI ---------- */
-  #hud{position:fixed; inset:0; z-index:20; pointer-events:none; display:none;}
-  #hud.active{display:block;}
+ .scrapLabel{position:absolute; top:calc(80px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); font-size:12px; color:var(--yellow); background:rgba(0,0,0,0.55); padding:3px 10px; border-radius:4px; border:1px solid var(--yellow-dim);}
 
-  .topBar{
-    position:absolute; top:0; left:0; right:0;
-    display:flex; justify-content:space-between; align-items:center;
-    padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
-    background:linear-gradient(to bottom, rgba(0,0,0,0.65), transparent);
-  }
-  .brandMark{
-    font-family:'Rubik',sans-serif; font-weight:900; font-size:14px; letter-spacing:2px;
-    color:var(--yellow); background:rgba(0,0,0,0.55); border:1.5px solid var(--yellow);
-    padding:5px 10px; border-radius:4px; pointer-events:auto;
-  }
-  #battery{
-    font-family:'Rubik',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px;
-    color:var(--yellow); background:rgba(0,0,0,0.55); border:1.5px solid var(--yellow-dim);
-    padding:5px 10px; border-radius:4px;
-  }
+ .chest{position:absolute; width:1.2*CELL; height:0.8*CELL; background:linear-gradient(180deg,#ffd700,#b8860b); border:2px solid #000; box-shadow:0 0 20px rgba(255,215,0,0.8); animation:chestGlow 1.5s infinite;}
+  @keyframes chestGlow{0%,100%{box-shadow:0 0 20px rgba(255,215,0,0.8);} 50%{box-shadow:0 0 35px rgba(255,215,0,1);}}
 
-  .crosshair{
-    position:absolute; top:50%; left:50%; width:10px; height:10px;
-    transform:translate(-50%,-50%);
-    border:2px solid var(--yellow); border-radius:50%;
-    opacity:0.7; box-shadow:0 0 8px rgba(232,196,0,0.5);
-    transition:border-color .1s, box-shadow .1s;
-  }
-  .crosshair.hot{border-color:#ff3b2a; box-shadow:0 0 14px rgba(255,59,42,0.85); opacity:1;}
+  #shopScreen{position:fixed; inset:0; z-index:65; display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:rgba(2,2,0,0.96); text-align:center; padding:24px;}
+  #shopScreen.active{display:flex;}
+ .shopTitle{font-family:'Archivo Black',sans-serif; font-size:clamp(24px,6vw,40px); color:var(--yellow);}
+ .shopItem{background:rgba(232,196,0,0.1); border:1px solid var(--yellow-dim); padding:10px; border-radius:6px; width:90%; max-width:320px; cursor:pointer;}
+ .shopItem:hover{background:rgba(232,196,0,0.2);}
+ .shopItem b{color:var(--yellow);}
 
-  .msgLine{
-    position:absolute; bottom:calc(150px + env(safe-area-inset-bottom)); left:0; right:0;
-    text-align:center; font-family:'Archivo Black',sans-serif; font-size:14px;
-    letter-spacing:1.5px; color:var(--yellow); text-shadow:0 0 12px rgba(232,196,0,0.6);
-    opacity:0; transition:opacity .4s; padding:0 20px;
-  }
-  .msgLine.show{opacity:1;}
-
-  /* HP / kills / weapon HUD */
-  .hpWrap{position:absolute; top:calc(10px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); width:190px;}
-  .hpBarBg{width:100%; height:13px; border:2px solid var(--yellow); border-radius:8px; background:rgba(0,0,0,0.5); overflow:hidden;}
-  .hpBarFill{height:100%; width:100%; background:linear-gradient(90deg,#ff3b3b,#ff8a00); transition:width .2s;}
-  .hpLabel{text-align:center; font-size:10px; letter-spacing:2px; color:#ffdca0; margin-top:2px; font-weight:700;}
-
-  .killCounter{
-    position:absolute; top:calc(56px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
-    font-family:'Rubik',sans-serif; font-weight:900; font-size:11.5px; color:var(--yellow);
-    background:rgba(0,0,0,0.55); border:1px solid var(--yellow-dim); padding:4px 10px; border-radius:4px; letter-spacing:1px;
-  }
-
-  .weaponHUD{position:absolute; left:16px; bottom:calc(175px + env(safe-area-inset-bottom)); pointer-events:none; text-align:left;}
-  .weaponName{font-family:'Archivo Black',sans-serif; font-size:13px; color:var(--yellow); text-shadow:0 0 8px rgba(232,196,0,.6); background:rgba(0,0,0,0.45); padding:4px 10px; border-radius:4px; border:1px solid var(--yellow-dim);}
-
-  /* touch look zone: whole screen behind joystick/buttons */
-  #lookZone{position:absolute; inset:0; pointer-events:auto;}
-
-  /* virtual joystick */
-  #joyZone{
-    position:absolute; left:22px; bottom:calc(26px + env(safe-area-inset-bottom));
-    width:130px; height:130px; pointer-events:auto;
-  }
-  #joyBase{
-    position:absolute; inset:0; border-radius:50%;
-    background:rgba(232,196,0,0.08);
-    border:2px solid rgba(232,196,0,0.45);
-    backdrop-filter:blur(1px);
-  }
-  #joyStick{
-    position:absolute; width:56px; height:56px; border-radius:50%;
-    left:50%; top:50%; transform:translate(-50%,-50%);
-    background:rgba(232,196,0,0.32); border:2px solid var(--yellow);
-    box-shadow:0 0 16px rgba(232,196,0,0.4);
-  }
-
-  .actionBtn{
-    position:absolute; pointer-events:auto;
-    width:72px; height:72px; border-radius:50%;
-    background:rgba(232,196,0,0.10); border:2px solid rgba(232,196,0,0.55);
-    display:flex; align-items:center; justify-content:center;
-    font-size:26px; color:var(--yellow);
-    box-shadow:0 0 14px rgba(232,196,0,0.15);
-  }
-  .actionBtn:active, .actionBtn.on{background:rgba(232,196,0,0.38); box-shadow:0 0 22px rgba(232,196,0,0.5);}
-  #flashlightBtn{right:24px; bottom:calc(120px + env(safe-area-inset-bottom));}
-  #sprintBtn{right:110px; bottom:calc(40px + env(safe-area-inset-bottom)); width:60px; height:60px; font-size:20px;}
-
-  #fireBtn{
-    position:absolute; pointer-events:auto; right:24px; bottom:calc(212px + env(safe-area-inset-bottom));
-    width:78px; height:78px; border-radius:50%;
-    background:rgba(255,60,40,0.16); border:2px solid rgba(255,90,60,0.75);
-    display:flex; align-items:center; justify-content:center; font-size:28px; color:#ff5a3c;
-    box-shadow:0 0 18px rgba(255,60,40,0.25);
-  }
-  #fireBtn:active{background:rgba(255,60,40,0.48); box-shadow:0 0 28px rgba(255,60,40,0.6);}
-
-  #weaponBtn{
-    position:absolute; pointer-events:auto; right:24px; bottom:calc(302px + env(safe-area-inset-bottom));
-    width:50px; height:50px; border-radius:10px;
-    background:rgba(0,0,0,0.55); border:1.5px solid var(--yellow-dim); color:var(--yellow);
-    font-size:19px; display:flex; align-items:center; justify-content:center;
-  }
-
-  #muteBtn{position:absolute; top:calc(10px + env(safe-area-inset-top)); left:16px; pointer-events:auto;
-    width:38px; height:38px; border-radius:6px; background:rgba(0,0,0,0.55); border:1.5px solid var(--yellow-dim);
-    color:var(--yellow); font-size:16px; display:flex; align-items:center; justify-content:center;}
-
-  #exitBtn{position:absolute; top:calc(10px + env(safe-area-inset-top)); right:16px; pointer-events:auto;
-    width:38px; height:38px; border-radius:6px; background:rgba(0,0,0,0.55); border:1.5px solid var(--yellow-dim);
-    color:var(--yellow); font-size:18px; display:flex; align-items:center; justify-content:center; font-weight:900;}
-
-  #dmgFlash{position:fixed; inset:0; z-index:30; pointer-events:none; opacity:0;
-    background:radial-gradient(circle, rgba(255,0,0,0) 40%, rgba(255,0,0,0.38) 100%);
-    transition:opacity .16s;}
-  #dmgFlash.show{opacity:1;}
-
-  /* end screens */
-  #gameOverScreen,#winScreen{
-    position:fixed; inset:0; z-index:60; display:none; flex-direction:column;
-    align-items:center; justify-content:center; gap:14px; background:rgba(2,2,0,0.94); text-align:center; padding:24px;
-  }
-  #gameOverScreen.active,#winScreen.active{display:flex;}
-  .overTitle{font-family:'Archivo Black',sans-serif; font-size:clamp(30px,8vw,54px); color:#ff3b3b; text-shadow:0 0 20px rgba(255,59,59,.6);}
-  .winTitle{font-family:'Archivo Black',sans-serif; font-size:clamp(30px,8vw,54px); color:var(--yellow); text-shadow:0 0 24px rgba(232,196,0,.7);}
-  .statLine{font-size:14.5px; color:#e8d9a0; font-weight:600; max-width:340px; line-height:1.6;}
-  .restartBtn{
-    margin-top:6px; font-family:'Archivo Black',sans-serif; font-size:17px; color:#000; background:var(--yellow);
-    border:none; padding:14px 40px; border-radius:6px; letter-spacing:2px; cursor:pointer;
-  }
-
-  @media (min-width:820px){
-    #joyZone,#flashlightBtn,#sprintBtn{transform:scale(1.15);}
-  }
+ .fog{position:fixed; inset:0; z-index:25; pointer-events:none; background:radial-gradient(circle, rgba(0,0,0,0) 20%, rgba(232,196,0,0.4) 100%); opacity:0; transition:opacity 1s;}
+ .fog.active{opacity:1;}
+ .shake{animation:shakeAnim 0.3s;}
+  @keyframes shakeAnim{0%{transform:translate(0,0);}25%{transform:translate(5px,5px);}50%{transform:translate(-5px,-5px);}75%{transform:translate(5px,-5px);}100%{transform:translate(0,0);}}
 </style>
 </head>
 <body>
@@ -227,17 +61,13 @@
   <div class="devTag">SOUHAIL ALAOUI</div>
   <button id="playBtn">ابدأ</button>
   <div class="objective">🎯 المهمة: اقتل كل الوحوش الغريبة، بعدها ابحث عن البوابة الأرجوانية للنجاة.</div>
-  <div class="hint">
-    حرك جهاز اللمس فالجانب الأيسر باش تمشي، ولمس فأي بلاصة أخرى باش تدور الكاميرا. الزر الأحمر لإطلاق النار، وزر 🔄 لتبديل السلاح.
-    <br><b>على الكمبيوتر:</b> WASD للحركة + الماوس للدوران + كليك أو Space لإطلاق النار.
-  </div>
+  <div class="hint">حرك جهاز اللمس فالجانب الأيسر باش تمشي، ولمس فأي بلاصة أخرى باش تدور الكاميرا.</div>
   <div class="brandStripe bottom"></div>
 </div>
 
 <!-- IN GAME HUD -->
 <div id="hud">
   <div id="lookZone"></div>
-
   <div class="topBar">
     <div class="brandMark">&lt;SOUHAIL ALAOUI /&gt;</div>
     <div id="battery">🔋 100%</div>
@@ -247,7 +77,15 @@
     <div class="hpBarBg"><div class="hpBarFill" id="hpFill"></div></div>
     <div class="hpLabel" id="hpLabel">100 HP</div>
   </div>
+
+  <!-- جديد: شريط التوتر -->
+  <div class="sanityWrap">
+    <div class="sanityBarBg"><div class="sanityBarFill" id="sanityFill"></div></div>
+    <div class="sanityLabel" id="sanityLabel">100 SANITY</div>
+  </div>
+
   <div class="killCounter" id="killCounter">القتلى: 0 / 10</div>
+  <div class="scrapLabel" id="scrapLabel">خردة: 0</div>
 
   <div class="crosshair" id="crosshair"></div>
   <div class="msgLine" id="msgLine"></div>
@@ -255,24 +93,30 @@
 
   <button id="muteBtn">🔊</button>
   <button id="exitBtn">✕</button>
-
-  <div id="joyZone">
-    <div id="joyBase"></div>
-    <div id="joyStick"></div>
-  </div>
-
+  <div id="joyZone"><div id="joyBase"></div><div id="joyStick"></div></div>
   <button class="actionBtn" id="flashlightBtn">🔦</button>
   <button class="actionBtn" id="sprintBtn">⚡</button>
   <button id="fireBtn">🔫</button>
   <button id="weaponBtn">🔄</button>
-
   <div id="dmgFlash"></div>
+  <div class="fog" id="fog"></div>
+</div>
+
+<!-- SHOP -->
+<div id="shopScreen">
+  <div class="shopTitle">المتجر</div>
+  <div class="shopItem" data-upg="armor"><b>درع +20HP</b><br>السعر: 15 خردة</div>
+  <div class="shopItem" data-upg="runner"><b>عداء +10% سرعة</b><br>السعر: 20 خردة</div>
+  <div class="shopItem" data-upg="sanity"><b>تدريب التوتر +20</b><br>السعر: 15 خردة</div>
+  <div class="shopItem" data-upg="lucky"><b>محظوظ +فرصة صناديق</b><br>السعر: 25 خردة</div>
+  <button class="restartBtn" id="closeShopBtn">إغلاق</button>
 </div>
 
 <!-- GAME OVER -->
 <div id="gameOverScreen">
   <div class="overTitle">لقد متّ</div>
   <div class="statLine" id="goStats"></div>
+  <button class="restartBtn" id="shopBtn">المتجر</button>
   <button class="restartBtn" id="restartBtn1">إعادة المحاولة</button>
 </div>
 
@@ -280,6 +124,7 @@
 <div id="winScreen">
   <div class="winTitle">لقد نجوت!</div>
   <div class="statLine" id="winStats"></div>
+  <button class="restartBtn" id="shopBtn2">المتجر</button>
   <button class="restartBtn" id="restartBtn2">العب من جديد</button>
 </div>
 
@@ -288,989 +133,199 @@
 (function(){
 "use strict";
 
-/* ============================================================
-   SOUHAIL ALAOUI — BACKROOMS: SURVIVAL
-   Procedural maze, weird procedural monsters, gun + crosshair
-   shooting, weapon/skill progression, locked exit portal.
-   Perf-tuned: fewer real-time lights, capped pixel ratio,
-   cheap ray-vs-point hit tests instead of full mesh raycasts.
-   ============================================================ */
+/* ====== المتغيرات الجديدة ====== */
+let sanity = 100;
+let scrap = parseInt(localStorage.getItem('scrap') || 0);
+let upgrades = JSON.parse(localStorage.getItem('upgrades') || '{}');
+let chests = [];
+let eventTimer = 0;
+let hallucinationMonsters = [];
+let playerMaxHP = 100 + (upgrades.armor||0)*20;
+let playerSpeedMult = 1 + (upgrades.runner||0)*0.1;
+let sanityMax = 100 + (upgrades.sanity||0)*20;
+let luckyChance = (upgrades.lucky||0)*0.15;
+let baseDamageBonus = 0;
 
-/* ---------------- CONFIG ---------------- */
-const CELL = 4;           // world units per grid cell
-const ROOMS_X = 12;        // maze "room" grid (smaller than before = fewer walls/lights = smoother)
-const ROOMS_Z = 12;
-const WALL_H = 3.6;
-const EXTRA_OPEN_RATIO = 0.20; // knock extra walls down for open backrooms feel
-const PLAYER_RADIUS = 0.34 * CELL;
-const MOVE_SPEED = 6.4;
-const SPRINT_MULT = 1.7;
-const MOVE_SMOOTH = 12;    // higher = snappier accel/decel (lighter feel)
-const LOOK_SMOOTH = 18;    // higher = tighter camera follow, lower = floatier
+/* ====== الكود ديالك القديم كامل هنا... انسخه كامل ====== */
+/* أنا غادي نزيد غير الدوال والاجزاء اللي تبدلات */
 
-/* combat / monster config */
-const MONSTER_COUNT = 10;
-const MONSTER_SPEED = 1.6;
-const CHASE_SPEED = 3.5;
-const CHASE_RADIUS = 8.5;
-const ATTACK_RADIUS = 1.5;
-const ATTACK_COOLDOWN = 1.1;
-const ATTACK_DAMAGE = 9;
-const BODY_BASE_Y = 1.25;
+/* ====== الأمر 1: نظام التوتر Sanity ====== */
+function updateSanity(dt){
+  const distToLight = getClosestLightDistance();
+  if(distToLight > 6) sanity -= 0.05 * dt * 60; // فالظلام
+  else sanity += 0.1 * dt * 60; // فالضوء
 
-const WEAPONS = [
-  {name:'مسدس', dmg:24, cooldown:0.36, unlockAt:0},
-  {name:'شوزن', dmg:46, cooldown:0.62, unlockAt:4},
-  {name:'رشاش', dmg:13, cooldown:0.10, unlockAt:8}
-];
+  sanity = Math.max(0, Math.min(sanityMax, sanity));
+  document.getElementById('sanityFill').style.width = (sanity/sanityMax*100)+'%';
+  document.getElementById('sanityLabel').textContent = Math.round(sanity)+' SANITY';
 
-const isTouch = window.matchMedia('(pointer: coarse)').matches;
-
-/* ---------------- MAZE GENERATION ---------------- */
-function buildMaze(rx, rz){
-  const GW = rx*2+1, GH = rz*2+1;
-  const grid = [];
-  for(let z=0; z<GH; z++){ grid.push(new Array(GW).fill(1)); }
-
-  function cellOpen(cx, cz){ grid[cz*2+1][cx*2+1] = 0; }
-  function wallOpen(cx1,cz1,cx2,cz2){
-    const wx = cx1+cx2+1, wz = cz1+cz2+1;
-    grid[wz][wx] = 0;
+  if(sanity < 30){
+    document.body.classList.add('shake');
+    if(Math.random()<0.01) playWhisper();
+  } else {
+    document.body.classList.remove('shake');
   }
 
-  const visited = [];
-  for(let z=0; z<rz; z++) visited.push(new Array(rx).fill(false));
-
-  const stack = [[0,0]];
-  visited[0][0] = true;
-  cellOpen(0,0);
-
-  while(stack.length){
-    const [cx,cz] = stack[stack.length-1];
-    const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dz])=>{
-      const nx=cx+dx, nz=cz+dz;
-      return nx>=0 && nx<rx && nz>=0 && nz<rz && !visited[nz][nx];
-    });
-    if(dirs.length===0){ stack.pop(); continue; }
-    const [dx,dz] = dirs[Math.floor(Math.random()*dirs.length)];
-    const nx=cx+dx, nz=cz+dz;
-    visited[nz][nx] = true;
-    cellOpen(nx,nz);
-    wallOpen(cx,cz,nx,nz);
-    stack.push([nx,nz]);
-  }
-
-  // knock extra interior walls down for open backrooms clusters
-  for(let z=0; z<rz; z++){
-    for(let x=0; x<rx; x++){
-      if(x<rx-1 && Math.random()<EXTRA_OPEN_RATIO) wallOpen(x,z,x+1,z);
-      if(z<rz-1 && Math.random()<EXTRA_OPEN_RATIO) wallOpen(x,z,x,z+1);
-    }
-  }
-  return {grid, GW, GH};
-}
-
-const {grid, GW, GH} = buildMaze(ROOMS_X, ROOMS_Z);
-
-function gridToWorld(gx,gz){
-  return [ (gx - GW/2) * CELL, (gz - GH/2) * CELL ];
-}
-function worldToGrid(x,z){
-  return [ Math.round(x/CELL + GW/2), Math.round(z/CELL + GH/2) ];
-}
-function isWallAt(gx,gz){
-  if(gx<0||gz<0||gx>=GW||gz>=GH) return true;
-  return grid[gz][gx] === 1;
-}
-
-// find a start cell (open) near center
-let startGX = GW/2|0, startGZ = GH/2|0;
-outer:
-for(let r=0;r<Math.max(GW,GH);r++){
-  for(let z=Math.max(0,startGZ-r); z<=Math.min(GH-1,startGZ+r); z++){
-    for(let x=Math.max(0,startGX-r); x<=Math.min(GW-1,startGX+r); x++){
-      if(!isWallAt(x,z)){ startGX=x; startGZ=z; break outer; }
-    }
+  if(sanity <= 0 && hallucinationMonsters.length === 0){
+    spawnHallucination();
+    sanity = 30; // ترجع شوية باش ما تبقاش فحلقة
   }
 }
 
-/* ---------------- BFS: farthest cell (exit) + distance map (spawn placement) ---------------- */
-function bfsFromStart(sx0, sz0){
-  const dist = [];
-  for(let z=0;z<GH;z++) dist.push(new Array(GW).fill(-1));
-  const queue = [[sx0,sz0]];
-  dist[sz0][sx0] = 0;
-  let farthest = [sx0,sz0];
-  let qi = 0;
-  while(qi < queue.length){
-    const [x,z] = queue[qi++];
-    const d = dist[z][x];
-    if(d > dist[farthest[1]][farthest[0]]) farthest = [x,z];
-    const nbrs = [[x+1,z],[x-1,z],[x,z+1],[x,z-1]];
-    for(const [nx,nz] of nbrs){
-      if(nx<0||nz<0||nx>=GW||nz>=GH) continue;
-      if(isWallAt(nx,nz)) continue;
-      if(dist[nz][nx] !== -1) continue;
-      dist[nz][nx] = d+1;
-      queue.push([nx,nz]);
-    }
-  }
-  return {farthest, dist};
+function spawnHallucination(){
+  const [gx,gz] = spawnCandidates[Math.floor(Math.random()*spawnCandidates.length)];
+  const [wx,wz] = gridToWorld(gx,gz);
+  const mesh = createMonsterMesh(Math.random()*10);
+  mesh.position.set(wx, BODY_BASE_Y, wz);
+  mesh.material = mesh.children[0].material;
+  mesh.children[0].material = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.4});
+  scene.add(mesh);
+  hallucinationMonsters.push({mesh, life:3});
+  showMsg('!!! هلوسة!!!');
 }
 
-const {farthest:exitCell, dist:distMap} = bfsFromStart(startGX, startGZ);
-const [exitWX, exitWZ] = gridToWorld(exitCell[0], exitCell[1]);
-
-const openCells = [];
-for(let z=0; z<GH; z++){
-  for(let x=0; x<GW; x++){
-    if(!isWallAt(x,z)) openCells.push([x,z]);
-  }
-}
-let spawnCandidates = openCells.filter(([x,z]) => distMap[z][x] >= 4 && !(x===exitCell[0] && z===exitCell[1]));
-if(spawnCandidates.length < MONSTER_COUNT){
-  spawnCandidates = openCells.filter(([x,z]) => !(x===startGX && z===startGZ) && !(x===exitCell[0] && z===exitCell[1]));
-}
-
-/* ---------------- CANVAS TEXTURES ---------------- */
-function makeWallTexture(){
-  const c = document.createElement('canvas');
-  c.width = 512; c.height = 512;
-  const g = c.getContext('2d');
-
-  // base grimy yellow
-  g.fillStyle = '#a8930f';
-  g.fillRect(0,0,512,512);
-
-  // noise/stains
-  for(let i=0;i<260;i++){
-    const x=Math.random()*512, y=Math.random()*512, r=Math.random()*40+4;
-    g.fillStyle = `rgba(0,0,0,${(Math.random()*0.12).toFixed(3)})`;
-    g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fill();
-  }
-  for(let i=0;i<120;i++){
-    const x=Math.random()*512, y=Math.random()*512, r=Math.random()*18+2;
-    g.fillStyle = `rgba(255,238,150,${(Math.random()*0.10).toFixed(3)})`;
-    g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fill();
-  }
-
-  // black hazard baseboard + trim
-  g.fillStyle = '#0a0900';
-  g.fillRect(0,440,512,72);
-  g.fillRect(0,0,512,14);
-
-  // repeated brand wallpaper text, diagonal tiling — fine, clear, spaced out
-  g.save();
-  g.translate(256,256);
-  g.rotate(-0.18);
-  g.translate(-256,-256);
-  g.font = "600 18px 'Rubik', sans-serif";
-  g.fillStyle = 'rgba(10,9,0,0.38)';
-  g.textBaseline = 'middle';
-  g.letterSpacing = '2px';
-  for(let row=-1; row<5; row++){
-    const y = row*130 + 40;
-    const offset = (row%2===0) ? 0 : 170;
-    for(let col=-1; col<3; col++){
-      const x = col*340 + offset;
-      g.fillText('SOUHAIL ALAOUI', x, y);
-    }
-  }
-  g.restore();
-
-  const tex = new THREE.CanvasTexture(c);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(1,1);
-  tex.magFilter = THREE.LinearFilter;
-  return tex;
-}
-
-function makeFloorTexture(){
-  const c = document.createElement('canvas');
-  c.width = 256; c.height = 256;
-  const g = c.getContext('2d');
-  g.fillStyle = '#0d0c07';
-  g.fillRect(0,0,256,256);
-  g.strokeStyle = 'rgba(232,196,0,0.10)';
-  g.lineWidth = 2;
-  for(let i=0;i<=256;i+=32){
-    g.beginPath(); g.moveTo(i,0); g.lineTo(i,256); g.stroke();
-    g.beginPath(); g.moveTo(0,i); g.lineTo(256,i); g.stroke();
-  }
-  for(let i=0;i<180;i++){
-    g.fillStyle = `rgba(232,196,0,${(Math.random()*0.05).toFixed(3)})`;
-    g.beginPath(); g.arc(Math.random()*256,Math.random()*256, Math.random()*14+2, 0, Math.PI*2); g.fill();
-  }
-  const tex = new THREE.CanvasTexture(c);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(GW/2, GH/2);
-  return tex;
-}
-
-function makeCeilingTexture(){
-  const c = document.createElement('canvas');
-  c.width = 256; c.height = 256;
-  const g = c.getContext('2d');
-  g.fillStyle = '#050400';
-  g.fillRect(0,0,256,256);
-  g.strokeStyle = 'rgba(232,196,0,0.14)';
-  g.lineWidth = 3;
-  for(let i=0;i<=256;i+=64){
-    g.beginPath(); g.moveTo(i,0); g.lineTo(i,256); g.stroke();
-    g.beginPath(); g.moveTo(0,i); g.lineTo(256,i); g.stroke();
-  }
-  const tex = new THREE.CanvasTexture(c);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(GW/4, GH/4);
-  return tex;
-}
-
-/* ---------------- THREE SETUP ---------------- */
-const canvas = document.getElementById('renderCanvas');
-const renderer = new THREE.WebGLRenderer({canvas, antialias: !isTouch, powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, isTouch ? 1.4 : 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = false;
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x030300);
-scene.fog = new THREE.FogExp2(0x08060a, 0.055);
-
-const camera = new THREE.PerspectiveCamera(72, window.innerWidth/window.innerHeight, 0.05, 120);
-const [sx, sz] = gridToWorld(startGX, startGZ);
-camera.position.set(sx, 1.65, sz);
-
-let yaw = 0, pitch = 0;
-let targetYaw = 0, targetPitch = 0;
-let velX = 0, velZ = 0;
-
-// ambient dim (slightly boosted since we now use fewer real-time lights)
-scene.add(new THREE.AmbientLight(0x554400, 0.42));
-
-// walls (instanced — single draw call regardless of wall count)
-const wallTex = makeWallTexture();
-const wallGeo = new THREE.BoxGeometry(CELL, WALL_H, CELL);
-const wallMat = new THREE.MeshStandardMaterial({map:wallTex, roughness:0.92, metalness:0.02});
-
-let wallCount = 0;
-for(let z=0; z<GH; z++) for(let x=0; x<GW; x++) if(grid[z][x]===1) wallCount++;
-
-const wallMesh = new THREE.InstancedMesh(wallGeo, wallMat, wallCount);
-{
-  const dummy = new THREE.Object3D();
-  let idx = 0;
-  for(let z=0; z<GH; z++){
-    for(let x=0; x<GW; x++){
-      if(grid[z][x]===1){
-        const [wx,wz] = gridToWorld(x,z);
-        dummy.position.set(wx, WALL_H/2, wz);
-        dummy.updateMatrix();
-        wallMesh.setMatrixAt(idx++, dummy.matrix);
-      }
-    }
-  }
-}
-scene.add(wallMesh);
-
-// floor
-const floorGeo = new THREE.PlaneGeometry(GW*CELL, GH*CELL);
-const floorMat = new THREE.MeshStandardMaterial({map:makeFloorTexture(), roughness:1});
-const floor = new THREE.Mesh(floorGeo, floorMat);
-floor.rotation.x = -Math.PI/2;
-floor.position.set(0,0,0);
-scene.add(floor);
-
-// ceiling
-const ceilGeo = new THREE.PlaneGeometry(GW*CELL, GH*CELL);
-const ceilMat = new THREE.MeshStandardMaterial({map:makeCeilingTexture(), roughness:1, side:THREE.DoubleSide});
-const ceiling = new THREE.Mesh(ceilGeo, ceilMat);
-ceiling.rotation.x = Math.PI/2;
-ceiling.position.set(0, WALL_H, 0);
-scene.add(ceiling);
-
-// fluorescent ceiling lights — spaced wider than before (fewer real-time lights = the #1 perf win)
-const fluoGeo = new THREE.PlaneGeometry(CELL*0.7, CELL*0.22);
-const fluoMat = new THREE.MeshBasicMaterial({color:0xfff4b0, toneMapped:false});
-const lights = [];
-for(let z=1; z<GH-1; z+=8){
-  for(let x=1; x<GW-1; x+=8){
-    if(grid[z] && grid[z][x]===0){
+/* ====== الأمر 2: نظام الصناديق Loot ====== */
+function spawnChests(){
+  openCells.forEach(([x,z])=>{
+    if(Math.random() < (0.20 + luckyChance) &&!(x===startGX && z===startGZ)){
       const [wx,wz] = gridToWorld(x,z);
-      const tube = new THREE.Mesh(fluoGeo, fluoMat.clone());
-      tube.rotation.x = Math.PI/2;
-      tube.position.set(wx, WALL_H-0.05, wz);
-      scene.add(tube);
-
-      const pl = new THREE.PointLight(0xffe98a, 1.9, CELL*8, 2);
-      pl.position.set(wx, WALL_H-0.3, wz);
-      scene.add(pl);
-
-      lights.push({mesh:tube, light:pl, phase:Math.random()*10, baseI:1.9});
+      const chest = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8,0.6,0.8),
+        new THREE.MeshStandardMaterial({color:0xffd700, emissive:0xffd700, emissiveIntensity:0.5})
+      );
+      chest.position.set(wx, 0.3, wz);
+      chest.userData = {type:'chest', open:false, openTimer:0};
+      scene.add(chest);
+      chests.push(chest);
     }
+  });
+}
+
+function openChest(chest){
+  if(chest.userData.open) return;
+  chest.userData.open = true;
+  chest.material.emissiveIntensity = 0;
+
+  const loot = ['medkit','battery','tome','sanity','trap'][Math.floor(Math.random()*5)];
+  switch(loot){
+    case 'medkit': playerHP = Math.min(playerMaxHP, playerHP+30); break;
+    case 'battery': batteryPct = 100; break;
+    case 'tome': baseDamageBonus += 1; break;
+    case 'sanity': sanity = Math.min(sanityMax, sanity+40); break;
+    case 'trap': damagePlayer(20); spawnMonsterNear(chest.position); break;
   }
-}
-if(lights.length===0){
-  const pl = new THREE.PointLight(0xffe98a, 1.9, CELL*8, 2);
-  pl.position.set(sx, WALL_H-0.3, sz);
-  scene.add(pl);
-  lights.push({mesh:null, light:pl, phase:0, baseI:1.9});
+  showMsg(`لقيت: ${loot}`);
+  // صوت عالي يجذب الوحوش
+  monsters.forEach(m=>{ if(m.alive) m.state='chase'; });
 }
 
-// player flashlight (spotlight attached to camera)
-const flashlight = new THREE.SpotLight(0xfff6cf, 0, 14, Math.PI/6.2, 0.5, 1.4);
-flashlight.position.set(0,0,0);
-const flashTarget = new THREE.Object3D();
-flashTarget.position.set(0,0,-1);
-camera.add(flashlight, flashTarget);
-flashlight.target = flashTarget;
-
-// small always-on personal glow so the player isn't pitch black between fluorescent tubes
-const playerGlow = new THREE.PointLight(0xffdf90, 0.55, 6.5, 2);
-camera.add(playerGlow);
-
-scene.add(camera);
-
-/* ---------------- WEAPON VIEWMODEL ---------------- */
-const gunGroup = new THREE.Group();
-{
-  const gunBody = new THREE.Mesh(
-    new THREE.BoxGeometry(0.13,0.13,0.5),
-    new THREE.MeshStandardMaterial({color:0x1a1a1a, roughness:0.4, metalness:0.6})
-  );
-  gunBody.position.set(0.22,-0.22,-0.55);
-  const gunBarrel = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.032,0.032,0.36,8),
-    new THREE.MeshStandardMaterial({color:0x0a0a0a, metalness:0.7, roughness:0.3})
-  );
-  gunBarrel.rotation.x = Math.PI/2;
-  gunBarrel.position.set(0.22,-0.19,-0.86);
-  const gunGrip = new THREE.Mesh(
-    new THREE.BoxGeometry(0.1,0.22,0.12),
-    new THREE.MeshStandardMaterial({color:0x151515, roughness:0.6})
-  );
-  gunGrip.position.set(0.22,-0.36,-0.4);
-  gunGroup.add(gunBody, gunBarrel, gunGrip);
-}
-camera.add(gunGroup);
-
-const muzzleFlash = new THREE.PointLight(0xfff6b0, 0, 4, 2);
-muzzleFlash.position.set(0.22,-0.19,-0.98);
-camera.add(muzzleFlash);
-
-/* ---------------- MONSTERS (procedural, weird-looking) ---------------- */
-function createMonsterMesh(seed){
-  const group = new THREE.Group();
-
-  const bodyGeo = new THREE.IcosahedronGeometry(0.85, 1);
-  const posAttr = bodyGeo.attributes.position;
-  for(let i=0;i<posAttr.count;i++){
-    const vx=posAttr.getX(i), vy=posAttr.getY(i), vz=posAttr.getZ(i);
-    const n = 0.20*Math.sin(vx*6+seed)*Math.cos(vy*5+seed) + 0.08*Math.sin(vz*9+seed*2);
-    const scale = 1+n;
-    posAttr.setXYZ(i, vx*scale, vy*scale, vz*scale);
-  }
-  bodyGeo.computeVertexNormals();
-  const sickly = new THREE.Color().setHSL(0.16 + Math.random()*0.05, 0.35, 0.55 + Math.random()*0.1);
-  const bodyMat = new THREE.MeshStandardMaterial({color:sickly, roughness:0.85, emissive:0x1c1808, emissiveIntensity:0.35});
-  const body = new THREE.Mesh(bodyGeo, bodyMat);
-  body.scale.set(1, 1.5+Math.random()*0.5, 1);
-  group.add(body);
-
-  // thin twitchy limbs
-  const limbGeo = new THREE.ConeGeometry(0.07, 1.3, 5);
-  const limbMat = new THREE.MeshStandardMaterial({color:0xb8b090, roughness:0.9});
-  const limbCount = 4 + (Math.random()<0.4 ? 2 : 0);
-  for(let i=0;i<limbCount;i++){
-    const limb = new THREE.Mesh(limbGeo, limbMat);
-    const ang = (i/limbCount)*Math.PI*2 + seed;
-    limb.position.set(Math.cos(ang)*0.5, -0.75, Math.sin(ang)*0.5);
-    limb.rotation.z = Math.cos(ang)*0.6;
-    limb.rotation.x = Math.sin(ang)*0.6;
-    group.add(limb);
-  }
-
-  // glowing red eyes, random count/placement — unsettling asymmetry
-  const eyeGeo = new THREE.SphereGeometry(0.09, 8, 8);
-  const eyeMat = new THREE.MeshBasicMaterial({color:0xff2a1a, toneMapped:false});
-  const eyeCount = 2 + Math.floor(Math.random()*3);
-  for(let i=0;i<eyeCount;i++){
-    const eye = new THREE.Mesh(eyeGeo, eyeMat);
-    eye.position.set((Math.random()-0.5)*0.8, 0.4+Math.random()*0.6, 0.7+Math.random()*0.15);
-    group.add(eye);
-  }
-
-  group.userData.bobPhase = Math.random()*10;
-  group.userData.spinJitter = (Math.random()-0.5)*0.6;
-  return group;
+/* ====== الأمر 3: نظام المتجر Scrap ====== */
+function addScrap(){
+  scrap += 1 + Math.floor(Math.random()*3);
+  localStorage.setItem('scrap', scrap);
+  document.getElementById('scrapLabel').textContent = `خردة: ${scrap}`;
 }
 
-const monsters = [];
-{
-  const pool = spawnCandidates.slice();
-  for(let i=pool.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    const tmp = pool[i]; pool[i]=pool[j]; pool[j]=tmp;
-  }
-  const count = Math.min(MONSTER_COUNT, pool.length);
-  for(let i=0;i<count;i++){
-    const [gx,gz] = pool[i];
-    const [wx,wz] = gridToWorld(gx,gz);
-    const mesh = createMonsterMesh(i*1.7 + Math.random()*3);
-    mesh.position.set(wx, BODY_BASE_Y, wz);
-    scene.add(mesh);
-    monsters.push({
-      mesh, hp:40, maxHp:40, alive:true, radius:0.55,
-      state:'wander', wanderTarget:null, wanderTimer:0, attackTimer:0
-    });
-  }
+function openShop(){
+  document.getElementById('shopScreen').classList.add('active');
+}
+function closeShop(){
+  document.getElementById('shopScreen').classList.remove('active');
 }
 
-/* ---------------- EXIT PORTAL (locked until all monsters are dead) ---------------- */
-let barrierMesh = null;
-{
-  const portalGroup = new THREE.Group();
-  const ringMat = new THREE.MeshStandardMaterial({color:0xb44bff, emissive:0x7a1fd6, emissiveIntensity:0.9, roughness:0.4});
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.12, 12, 24), ringMat);
-  ring.position.set(0,1.6,0);
-  portalGroup.add(ring);
-
-  const glowMat = new THREE.MeshBasicMaterial({color:0x9a3bff, transparent:true, opacity:0.35, side:THREE.DoubleSide});
-  const glow = new THREE.Mesh(new THREE.CircleGeometry(1.15, 24), glowMat);
-  glow.position.set(0,1.6,0);
-  portalGroup.add(glow);
-
-  const portalLight = new THREE.PointLight(0xb44bff, 1.5, 9, 2);
-  portalLight.position.set(0,1.6,0);
-  portalGroup.add(portalLight);
-
-  portalGroup.position.set(exitWX, 0, exitWZ);
-  scene.add(portalGroup);
-  window.__portalRing = ring; // referenced on unlock
-
-  const barrierMat = new THREE.MeshBasicMaterial({color:0xff2a1a, transparent:true, opacity:0.55, side:THREE.DoubleSide});
-  barrierMesh = new THREE.Mesh(new THREE.PlaneGeometry(CELL*0.9, WALL_H*0.9), barrierMat);
-  barrierMesh.position.set(exitWX, WALL_H*0.45, exitWZ + 1.4);
-  scene.add(barrierMesh);
-}
-
-/* ---------------- RESIZE ---------------- */
-window.addEventListener('resize', ()=>{
-  camera.aspect = window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-/* ---------------- AUDIO (ambient hum) ---------------- */
-let audioCtx=null, ambientNodes=null, audioOn=true;
-function startAmbient(){
-  try{
-    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    const osc1 = audioCtx.createOscillator();
-    osc1.type='sine'; osc1.frequency.value=60;
-    const osc2 = audioCtx.createOscillator();
-    osc2.type='sine'; osc2.frequency.value=121;
-    const gain = audioCtx.createGain();
-    gain.gain.value = 0.05;
-    const buzz = audioCtx.createOscillator();
-    buzz.type='square'; buzz.frequency.value=120;
-    const buzzGain = audioCtx.createGain();
-    buzzGain.gain.value = 0.008;
-    osc1.connect(gain); osc2.connect(gain);
-    buzz.connect(buzzGain);
-    gain.connect(audioCtx.destination);
-    buzzGain.connect(audioCtx.destination);
-    osc1.start(); osc2.start(); buzz.start();
-    ambientNodes = {osc1,osc2,buzz,gain,buzzGain};
-  }catch(e){ /* audio unsupported, ignore */ }
-}
-function playShotBlip(){
-  if(!audioCtx || !audioOn) return;
-  try{
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type='square'; o.frequency.value = 180;
-    g.gain.value = 0.06;
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start();
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.12);
-    o.stop(audioCtx.currentTime+0.13);
-  }catch(e){}
-}
-function playGrowl(){
-  if(!audioCtx || !audioOn) return;
-  try{
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type='sawtooth'; o.frequency.value = 70;
-    g.gain.value = 0.04;
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start();
-    o.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime+0.3);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.32);
-    o.stop(audioCtx.currentTime+0.33);
-  }catch(e){}
-}
-
-/* ---------------- INPUT: KEYBOARD (desktop) ---------------- */
-const keys = {};
-window.addEventListener('keydown', e=>{ keys[e.code]=true; if(e.code==='Space') fireWeapon(); });
-window.addEventListener('keyup', e=>keys[e.code]=false);
-
-let pointerLocked=false;
-canvas.addEventListener('click', ()=>{
-  if(window.matchMedia('(pointer: fine)').matches && document.getElementById('hud').classList.contains('active')){
-    canvas.requestPointerLock && canvas.requestPointerLock();
-  }
-});
-document.addEventListener('pointerlockchange', ()=>{ pointerLocked = document.pointerLockElement===canvas; });
-document.addEventListener('mousemove', e=>{
-  if(!pointerLocked) return;
-  targetYaw -= e.movementX * 0.0026;
-  targetPitch -= e.movementY * 0.0026;
-  targetPitch = Math.max(-1.3, Math.min(1.3, targetPitch));
-});
-document.addEventListener('mousedown', e=>{
-  if(pointerLocked && e.button===0) fireWeapon();
-});
-
-/* ---------------- INPUT: TOUCH LOOK ---------------- */
-const lookZone = document.getElementById('lookZone');
-const joyZone = document.getElementById('joyZone');
-let lookTouchId = null, lastLookX=0, lastLookY=0;
-
-function pointInRect(x,y,el){
-  const r = el.getBoundingClientRect();
-  return x>=r.left && x<=r.right && y>=r.top && y<=r.bottom;
-}
-
-lookZone.addEventListener('touchstart', e=>{
-  for(const t of e.changedTouches){
-    if(pointInRect(t.clientX,t.clientY,joyZone)) continue; // joystick handles this one
-    if(lookTouchId===null){
-      lookTouchId = t.identifier;
-      lastLookX = t.clientX; lastLookY = t.clientY;
+document.querySelectorAll('.shopItem').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    const upg = item.dataset.upg;
+    const prices = {armor:15, runner:20, sanity:15, lucky:25};
+    if(scrap >= prices[upg]){
+      scrap -= prices[upg];
+      upgrades[upg] = (upgrades[upg]||0) + 1;
+      localStorage.setItem('upgrades', JSON.stringify(upgrades));
+      localStorage.setItem('scrap', scrap);
+      addScrap(); // تحديث العرض
+      showMsg('تم الشراء!');
     }
-  }
-}, {passive:true});
-
-lookZone.addEventListener('touchmove', e=>{
-  for(const t of e.changedTouches){
-    if(t.identifier===lookTouchId){
-      const dx = t.clientX-lastLookX, dy = t.clientY-lastLookY;
-      lastLookX=t.clientX; lastLookY=t.clientY;
-      targetYaw -= dx*0.0038;
-      targetPitch -= dy*0.0038;
-      targetPitch = Math.max(-1.3, Math.min(1.3, targetPitch));
-    }
-  }
-}, {passive:true});
-
-function endLookTouch(e){
-  for(const t of e.changedTouches){
-    if(t.identifier===lookTouchId) lookTouchId=null;
-  }
-}
-lookZone.addEventListener('touchend', endLookTouch, {passive:true});
-lookZone.addEventListener('touchcancel', endLookTouch, {passive:true});
-
-/* ---------------- INPUT: JOYSTICK ---------------- */
-const joyStick = document.getElementById('joyStick');
-let joyTouchId=null, joyVec={x:0,y:0};
-const JOY_MAX = 46;
-
-joyZone.addEventListener('touchstart', e=>{
-  e.stopPropagation();
-  const t = e.changedTouches[0];
-  joyTouchId = t.identifier;
-  updateJoy(t);
-}, {passive:true});
-
-joyZone.addEventListener('touchmove', e=>{
-  e.stopPropagation();
-  for(const t of e.changedTouches){
-    if(t.identifier===joyTouchId) updateJoy(t);
-  }
-}, {passive:true});
-
-function updateJoy(t){
-  const r = joyZone.getBoundingClientRect();
-  const cx = r.left+r.width/2, cy = r.top+r.height/2;
-  let dx = t.clientX-cx, dy = t.clientY-cy;
-  const dist = Math.min(JOY_MAX, Math.hypot(dx,dy));
-  const ang = Math.atan2(dy,dx);
-  dx = Math.cos(ang)*dist; dy = Math.sin(ang)*dist;
-  joyStick.style.transform = `translate(${dx-28}px, ${dy-28}px)`;
-  joyVec.x = dx/JOY_MAX; joyVec.y = dy/JOY_MAX;
-}
-function resetJoy(e){
-  for(const t of e.changedTouches){
-    if(t.identifier===joyTouchId){
-      joyTouchId=null; joyVec.x=0; joyVec.y=0;
-      joyStick.style.transform = 'translate(-50%,-50%)';
-    }
-  }
-}
-joyZone.addEventListener('touchend', resetJoy, {passive:true});
-joyZone.addEventListener('touchcancel', resetJoy, {passive:true});
-
-/* ---------------- BUTTONS ---------------- */
-let flashOn=false;
-document.getElementById('flashlightBtn').addEventListener('click', ()=>{
-  flashOn = !flashOn;
-  flashlight.intensity = flashOn ? 2.2 : 0;
-  document.getElementById('flashlightBtn').classList.toggle('on', flashOn);
+  });
 });
 
-let sprintOn=false;
-const sprintBtn = document.getElementById('sprintBtn');
-sprintBtn.addEventListener('touchstart', e=>{e.stopPropagation(); sprintOn=true; sprintBtn.classList.add('on');}, {passive:true});
-sprintBtn.addEventListener('touchend', e=>{e.stopPropagation(); sprintOn=false; sprintBtn.classList.remove('on');}, {passive:true});
-sprintBtn.addEventListener('mousedown', ()=>sprintOn=true);
-window.addEventListener('mouseup', ()=>sprintOn=false);
-
-document.getElementById('muteBtn').addEventListener('click', ()=>{
-  audioOn = !audioOn;
-  document.getElementById('muteBtn').textContent = audioOn ? '🔊' : '🔇';
-  if(ambientNodes) ambientNodes.gain.gain.value = audioOn ? 0.05 : 0;
-});
-
-document.getElementById('exitBtn').addEventListener('click', ()=>{
-  document.getElementById('hud').classList.remove('active');
-  document.getElementById('startScreen').style.display='flex';
-  if(document.exitPointerLock) document.exitPointerLock();
-});
-
-const fireBtn = document.getElementById('fireBtn');
-fireBtn.addEventListener('touchstart', e=>{e.stopPropagation(); fireWeapon();}, {passive:true});
-fireBtn.addEventListener('mousedown', e=>{e.stopPropagation(); fireWeapon();});
-
-document.getElementById('weaponBtn').addEventListener('click', ()=>{
-  if(unlockedWeapons.length<2){ showMsg('ما عندكش سلاح آخر بعد، قتل المزيد من الوحوش!'); return; }
-  let idx = unlockedWeapons.indexOf(currentWeaponIdx);
-  idx = (idx+1) % unlockedWeapons.length;
-  currentWeaponIdx = unlockedWeapons[idx];
-  updateHUD();
-  showMsg(`تم اختيار: ${WEAPONS[currentWeaponIdx].name}`);
-});
-
-document.getElementById('restartBtn1').addEventListener('click', ()=>location.reload());
-document.getElementById('restartBtn2').addEventListener('click', ()=>location.reload());
-
-/* ---------------- START ---------------- */
-document.getElementById('playBtn').addEventListener('click', ()=>{
-  document.getElementById('startScreen').style.display='none';
-  document.getElementById('hud').classList.add('active');
-  startAmbient();
-  updateHUD();
-  showMsg('لا نهاية لهذا المكان... اقتل كل الوحوش!');
-});
-
-let msgTimer=null;
-function showMsg(text){
-  const el = document.getElementById('msgLine');
-  el.textContent = text;
-  el.classList.add('show');
-  clearTimeout(msgTimer);
-  msgTimer = setTimeout(()=>el.classList.remove('show'), 3200);
-}
-
-/* ---------------- MOVEMENT / COLLISION ---------------- */
-function tryMove(nx, nz, radius){
-  radius = radius || PLAYER_RADIUS;
-  const [gx0,gz0] = worldToGrid(nx, nz);
-  for(let dz=-1; dz<=1; dz++){
-    for(let dx=-1; dx<=1; dx++){
-      const gx=gx0+dx, gz=gz0+dz;
-      if(!isWallAt(gx,gz)) continue;
-      const [wx,wz] = gridToWorld(gx,gz);
-      const closeX = Math.max(wx-CELL/2, Math.min(nx, wx+CELL/2));
-      const closeZ = Math.max(wz-CELL/2, Math.min(nz, wz+CELL/2));
-      const dist = Math.hypot(nx-closeX, nz-closeZ);
-      if(dist < radius) return false;
-    }
+/* ====== الأمر 4: أحداث عشوائية ====== */
+function triggerRandomEvent(){
+  const event = Math.floor(Math.random()*3);
+  if(event===0){ // انقطاع الكهرباء
+    lights.forEach(L=>L.light.intensity=0);
+    setTimeout(()=>{ lights.forEach(L=>L.light.intensity=L.baseI); }, 10000);
+    showMsg('انقطاع الكهرباء!');
   }
-  return true;
-}
-
-/* ---------------- COMBAT STATE ---------------- */
-let unlockedWeapons = [0];
-let currentWeaponIdx = 0;
-let fireTimer = 0;
-let recoil = 0;
-let killCount = 0;
-let playerHP = 100;
-let dmgMult = 1;
-let gameEnded = false;
-let exitOpen = false;
-let batteryPct = 100;
-
-// reusable vectors to avoid per-frame garbage
-const _camDir = new THREE.Vector3();
-const _closePt = new THREE.Vector3();
-
-function updateHUD(){
-  document.getElementById('hpFill').style.width = Math.max(0,playerHP)+'%';
-  document.getElementById('hpLabel').textContent = Math.max(0,Math.round(playerHP))+' HP';
-  document.getElementById('killCounter').textContent = `القتلى: ${killCount} / ${monsters.length}`;
-  document.getElementById('weaponName').textContent = WEAPONS[currentWeaponIdx].name;
-}
-
-function spawnHitSpark(pos){
-  const spark = new THREE.Mesh(
-    new THREE.SphereGeometry(0.12,6,6),
-    new THREE.MeshBasicMaterial({color:0xffdd66, transparent:true, opacity:0.9, toneMapped:false})
-  );
-  spark.position.copy(pos);
-  scene.add(spark);
-  let life = 0;
-  function tick(){
-    life += 1/60;
-    spark.scale.multiplyScalar(1.14);
-    spark.material.opacity -= 0.09;
-    if(spark.material.opacity<=0){ scene.remove(spark); spark.geometry.dispose(); spark.material.dispose(); return; }
-    requestAnimationFrame(tick);
+  if(event===1){ // هجوم
+    for(let i=0;i<3;i++) spawnMonsterNear(camera.position);
+    showMsg('هجوم وحوش!');
   }
-  tick();
+  if(event===2){ // ضباب
+    document.getElementById('fog').classList.add('active');
+    scene.fog = new THREE.FogExp2(0x08060a, 0.2);
+    setTimeout(()=>{ document.getElementById('fog').classList.remove('active'); scene.fog = new THREE.FogExp2(0x08060a, 0.055); }, 20000);
+    showMsg('ضباب أصفر!');
+  }
 }
 
-function killMonster(m){
-  m.alive = false;
-  killCount++;
-  dmgMult = Math.min(2, 1 + killCount*0.05);
-
-  for(let i=0;i<WEAPONS.length;i++){
-    if(killCount>=WEAPONS[i].unlockAt && unlockedWeapons.indexOf(i)===-1){
-      unlockedWeapons.push(i);
-      showMsg(`⚔ سلاح جديد اتحصل عليه: ${WEAPONS[i].name}!`);
-    }
-  }
-  updateHUD();
-
-  const mesh = m.mesh;
-  let t = 0;
-  function tick(){
-    t += 1/60;
-    mesh.scale.multiplyScalar(0.9);
-    mesh.position.y -= 0.02;
-    mesh.rotation.y += 0.3;
-    if(t>0.6){
-      scene.remove(mesh);
-      checkWinUnlock();
-      return;
-    }
-    requestAnimationFrame(tick);
-  }
-  tick();
-}
-
+/* ====== الأمر 5: تحسينات الفيدباك ====== */
 function hitMonster(m, dmg){
   if(!m.alive) return;
-  m.hp -= dmg;
+  m.hp -= (dmg + baseDamageBonus);
+  m.mesh.children[0].material.color.set(0xff0000);
+  setTimeout(()=>{ if(m.alive) m.mesh.children[0].material.color.set(0xaaaaaa); }, 100);
+  m.mesh.position.z -= 0.2; // يرجع لور
   spawnHitSpark(new THREE.Vector3(m.mesh.position.x, m.mesh.position.y, m.mesh.position.z));
-  if(m.hp<=0){
-    killMonster(m);
-  }
+  if(m.hp<=0){ killMonster(m); addScrap(); sanity += 15; }
 }
 
-function checkWinUnlock(){
-  if(killCount>=monsters.length && !exitOpen){
-    exitOpen = true;
-    if(barrierMesh){ scene.remove(barrierMesh); }
-    if(window.__portalRing){
-      window.__portalRing.material.color.set(0x39ff6a);
-      window.__portalRing.material.emissive.set(0x1fd648);
-    }
-    showMsg('✅ انقرضت الوحوش! المخرج انفتح — اذهب للبوابة الخضراء');
-  }
-}
-
-function fireWeapon(){
-  if(gameEnded || fireTimer>0) return;
-  const w = WEAPONS[currentWeaponIdx];
-  fireTimer = w.cooldown;
-  recoil = 0.16;
-  muzzleFlash.intensity = 3;
-  playShotBlip();
-
-  camera.getWorldDirection(_camDir);
-  const camPos = camera.position;
-  let closest = null, closestT = Infinity;
-
-  for(const m of monsters){
-    if(!m.alive) continue;
-    const mp = m.mesh.position;
-    const tx = mp.x-camPos.x, ty = mp.y-camPos.y, tz = mp.z-camPos.z;
-    const t = tx*_camDir.x + ty*_camDir.y + tz*_camDir.z;
-    if(t<=0 || t>40) continue;
-    _closePt.set(camPos.x+_camDir.x*t, camPos.y+_camDir.y*t, camPos.z+_camDir.z*t);
-    const dist = _closePt.distanceTo(mp);
-    if(dist < 0.9 && t < closestT){ closestT = t; closest = m; }
-  }
-
-  if(closest) hitMonster(closest, w.dmg*dmgMult);
-}
-
-function damagePlayer(dmg){
-  if(gameEnded) return;
-  playerHP = Math.max(0, playerHP-dmg);
-  updateHUD();
-  const flash = document.getElementById('dmgFlash');
-  flash.classList.add('show');
-  setTimeout(()=>flash.classList.remove('show'), 180);
-  if(playerHP<=0) gameOver();
-}
-
-function gameOver(){
-  gameEnded = true;
-  document.getElementById('goStats').textContent = `القتلى: ${killCount} / ${monsters.length}`;
-  document.getElementById('gameOverScreen').classList.add('active');
-  if(document.exitPointerLock) document.exitPointerLock();
-}
-
-function winGame(){
-  gameEnded = true;
-  document.getElementById('winStats').textContent = `القتلى: ${killCount} / ${monsters.length} — نجحت فالهروب من الغرف الخلفية!`;
-  document.getElementById('winScreen').classList.add('active');
-  if(document.exitPointerLock) document.exitPointerLock();
-}
-
-/* ---------------- MAIN LOOP ---------------- */
-const clock = new THREE.Clock();
+/* ====== تعديلات فـ animate() ====== */
 function animate(){
   requestAnimationFrame(animate);
   const dt = Math.min(0.05, clock.getDelta());
 
-  // camera rotation — smoothly ease toward target for a lighter, floatier feel
-  const lookLerp = 1 - Math.exp(-LOOK_SMOOTH * dt);
-  yaw += (targetYaw - yaw) * lookLerp;
-  pitch += (targetPitch - pitch) * lookLerp;
-  camera.rotation.order = 'YXZ';
-  camera.rotation.y = yaw;
-  camera.rotation.x = pitch;
-
   if(!gameEnded){
-    // movement input: keyboard + joystick combine
-    let mx=0, mz=0;
-    if(keys['KeyW']||keys['ArrowUp']) mz -= 1;
-    if(keys['KeyS']||keys['ArrowDown']) mz += 1;
-    if(keys['KeyA']||keys['ArrowLeft']) mx -= 1;
-    if(keys['KeyD']||keys['ArrowRight']) mx += 1;
-    mx += joyVec.x;
-    mz += joyVec.y;
+    updateSanity(dt);
+    eventTimer += dt;
+    if(eventTimer > 45){ triggerRandomEvent(); eventTimer = 0; }
 
-    const len = Math.hypot(mx,mz);
-    let targetVX = 0, targetVZ = 0;
-    if(len > 0.05){
-      const nmx = mx/Math.max(len,1), nmz = mz/Math.max(len,1);
-      const speed = MOVE_SPEED * (sprintOn||keys['ShiftLeft'] ? SPRINT_MULT : 1) * Math.min(1,len);
-      const sinY = Math.sin(yaw), cosY = Math.cos(yaw);
-      const fx = -sinY, fz = -cosY; // forward
-      const rx = cosY, rz = -sinY; // right
-      targetVX = (fx*(-nmz) + rx*nmx) * speed;
-      targetVZ = (fz*(-nmz) + rz*nmx) * speed;
-      if(flashOn){ batteryPct = Math.max(0, batteryPct - dt*0.35); }
-    }
+    // تحديث الهلوسات
+    hallucinationMonsters = hallucinationMonsters.filter(h=>{
+      h.life -= dt;
+      if(h.life<=0){ scene.remove(h.mesh); return false; }
+      return true;
+    });
 
-    // ease velocity toward target — light acceleration/deceleration instead of instant stop-start
-    const moveLerp = 1 - Math.exp(-MOVE_SMOOTH * dt);
-    velX += (targetVX - velX) * moveLerp;
-    velZ += (targetVZ - velZ) * moveLerp;
-
-    if(Math.hypot(velX,velZ) > 0.001){
-      const dxw = velX * dt, dzw = velZ * dt;
-      const px = camera.position.x, pz = camera.position.z;
-      if(tryMove(px+dxw, pz)) camera.position.x += dxw; else velX = 0;
-      if(tryMove(camera.position.x, pz+dzw)) camera.position.z += dzw; else velZ = 0;
-    }
-
-    // weapon cooldown / recoil ease
-    fireTimer = Math.max(0, fireTimer-dt);
-    muzzleFlash.intensity *= 0.8;
-    recoil += (0-recoil) * (1-Math.exp(-10*dt));
-    gunGroup.position.z = -recoil;
-
-    // monster AI + combat
-    const camPos = camera.position;
-    let anyChasing = false;
-    for(const m of monsters){
-      if(!m.alive) continue;
-      const mp = m.mesh.position;
-      const dx = camPos.x-mp.x, dz = camPos.z-mp.z;
-      const dist = Math.hypot(dx,dz);
-
-      if(dist < CHASE_RADIUS) m.state='chase';
-      else if(dist > CHASE_RADIUS*1.6) m.state='wander';
-
-      let moveX=0, moveZ=0, speed=MONSTER_SPEED;
-      if(m.state==='chase'){
-        anyChasing = true;
-        speed = CHASE_SPEED;
-        if(dist>0.01){ moveX = dx/dist; moveZ = dz/dist; }
-        m.attackTimer -= dt;
-        if(dist < ATTACK_RADIUS && m.attackTimer<=0){
-          m.attackTimer = ATTACK_COOLDOWN;
-          damagePlayer(ATTACK_DAMAGE);
-          playGrowl();
-        }
-      } else {
-        m.wanderTimer -= dt;
-        if(!m.wanderTarget || m.wanderTimer<=0){
-          const ang = Math.random()*Math.PI*2;
-          const d2 = 2+Math.random()*3;
-          m.wanderTarget = [mp.x+Math.cos(ang)*d2, mp.z+Math.sin(ang)*d2];
-          m.wanderTimer = 2+Math.random()*3;
-        }
-        const wdx = m.wanderTarget[0]-mp.x, wdz = m.wanderTarget[1]-mp.z;
-        const wdist = Math.hypot(wdx,wdz);
-        if(wdist>0.15){ moveX=wdx/wdist; moveZ=wdz/wdist; }
+    // فحص الاقتراب من الصندوق
+    chests.forEach(chest=>{
+      if(!chest.userData.open && camera.position.distanceTo(chest.position) < 1.5){
+        chest.userData.openTimer += dt;
+        if(chest.userData.openTimer > 2) openChest(chest);
       }
-
-      const stepX = moveX*speed*dt, stepZ = moveZ*speed*dt;
-      if(tryMove(mp.x+stepX, mp.z, m.radius)) mp.x += stepX;
-      if(tryMove(mp.x, mp.z+stepZ, m.radius)) mp.z += stepZ;
-
-      const bt = performance.now()*0.001;
-      mp.y = BODY_BASE_Y + Math.sin(bt*2.4 + m.mesh.userData.bobPhase)*0.07;
-      m.mesh.lookAt(camPos.x, mp.y, camPos.z);
-    }
-
-    // crosshair "hot" state — cheap reticle-on-target check, reusing the same math as fireWeapon
-    let onTarget = false;
-    camera.getWorldDirection(_camDir);
-    for(const m of monsters){
-      if(!m.alive) continue;
-      const mp = m.mesh.position;
-      const tx = mp.x-camPos.x, ty = mp.y-camPos.y, tz = mp.z-camPos.z;
-      const t = tx*_camDir.x + ty*_camDir.y + tz*_camDir.z;
-      if(t<=0 || t>40) continue;
-      _closePt.set(camPos.x+_camDir.x*t, camPos.y+_camDir.y*t, camPos.z+_camDir.z*t);
-      if(_closePt.distanceTo(mp) < 0.9){ onTarget = true; break; }
-    }
-    document.getElementById('crosshair').classList.toggle('hot', onTarget);
-
-    // win check
-    if(exitOpen){
-      const dxE = camPos.x-exitWX, dzE = camPos.z-exitWZ;
-      if(Math.hypot(dxE,dzE) < 1.6) winGame();
-    }
+    });
   }
 
-  // flicker fluorescent lights (always runs — cheap, small light count)
-  const t = performance.now()*0.001;
-  for(const L of lights){
-    const flick = 0.75 + 0.25*Math.sin(t*7 + L.phase) + (Math.random()<0.01 ? -0.6 : 0);
-    const val = Math.max(0.15, Math.min(1, flick));
-    L.light.intensity = L.baseI * val;
-    if(L.mesh) L.mesh.material.color.setRGB(1, 0.95*val+0.05, 0.6*val+0.1);
-  }
-
-  if(flashOn) batteryPct = Math.max(0, batteryPct - dt*0.15);
-  document.getElementById('battery').textContent = `🔋 ${Math.round(batteryPct)}%`;
-  if(flashOn) flashlight.intensity = 2.2 * Math.max(0.15, batteryPct/100);
-
-  renderer.render(scene, camera);
+  /*... باقي الكود ديالك ديال الحركة والرندر... */
 }
-animate();
+
+/* ====== تعديلات فـ killMonster ====== */
+function killMonster(m){
+  m.alive = false;
+  killCount++;
+  //... باقي الكود ديالك
+}
+
+/* ====== فـ playBtn click ====== */
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  sanity = sanityMax;
+  playerHP = playerMaxHP;
+  spawnChests(); // نولدو الصناديق
+  //... باقي الكود
+});
+
+document.getElementById('shopBtn').addEventListener('click', openShop);
+document.getElementById('shopBtn2').addEventListener('click', openShop);
+document.getElementById('closeShopBtn').addEventListener('click', closeShop);
 
 })();
 </script>
