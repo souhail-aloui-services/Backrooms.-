@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>BACKROOMS v2.0 — النجاة والإدمان — SOUHAIL ALAOUI</title>
+<title>BACKROOMS v4.0 — النجاة والفوضى — SOUHAIL ALAOUI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Rubik:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -80,6 +80,19 @@
   .hint b{color:var(--yellow);}
   .objective{font-size:13px; color:#ff9d5a; max-width:360px; line-height:1.7; font-weight:700;}
 
+  /* ---------- NAME ENTRY (first-visit onboarding) ---------- */
+  #nameScreen{
+    position:fixed; inset:0; z-index:90;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:#050400; gap:16px; text-align:center; padding:24px;
+  }
+  #nameInput{
+    font-family:'Rubik',sans-serif; font-weight:700; font-size:18px; text-align:center;
+    color:var(--yellow); background:rgba(232,196,0,0.08); border:2px solid var(--yellow-dim);
+    border-radius:8px; padding:12px 18px; width:min(300px,80vw); outline:none;
+  }
+  #nameInput:focus{border-color:var(--yellow);}
+
   /* ---------- HUD / IN-GAME UI ---------- */
   #hud{position:fixed; inset:0; z-index:20; pointer-events:none; display:none;}
   #hud.active{display:block;}
@@ -143,6 +156,7 @@
     75%{transform:translate(-2px,3px);}
   }
   #renderCanvas.lowSanity{animation:lowSanityShake 0.15s infinite;}
+  #renderCanvas.earthquake{animation:lowSanityShake 0.08s infinite;}
 
   #scrapHud{
     position:absolute; top:calc(56px + env(safe-area-inset-top)); right:16px;
@@ -167,6 +181,15 @@
   #traderPrompt.show{opacity:1;}
   #traderProgressBg{width:160px; height:9px; margin:6px auto 0; border:2px solid #8fe0ff; border-radius:6px; overflow:hidden; background:rgba(0,0,0,0.5);}
   #traderProgressFill{height:100%; width:0%; background:#8fe0ff;}
+
+  #chefPrompt{
+    position:absolute; bottom:calc(272px + env(safe-area-inset-bottom)); left:0; right:0; text-align:center;
+    font-family:'Archivo Black',sans-serif; font-size:12.5px; color:#ffb35a;
+    text-shadow:0 0 10px rgba(255,179,90,0.7); opacity:0; transition:opacity .3s; padding:0 20px;
+  }
+  #chefPrompt.show{opacity:1;}
+  #chefProgressBg{width:160px; height:9px; margin:6px auto 0; border:2px solid #ffb35a; border-radius:6px; overflow:hidden; background:rgba(0,0,0,0.5);}
+  #chefProgressFill{height:100%; width:0%; background:#ffb35a;}
 
   #photoBtn{left:24px; bottom:calc(178px + env(safe-area-inset-bottom)); width:58px; height:58px; font-size:22px;}
 
@@ -201,6 +224,16 @@
   .shopBuyBtn:disabled{opacity:0.35;}
   .shopCloseBtn{margin-top:6px; font-family:'Archivo Black',sans-serif; font-size:14px; color:var(--yellow); background:transparent; border:2px solid var(--yellow); padding:10px 30px; border-radius:6px; cursor:pointer;}
   .ghostBtn{background:transparent !important; color:var(--yellow) !important; border:2px solid var(--yellow) !important;}
+
+  #homeScreen{
+    position:fixed; inset:0; z-index:70; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:10px; background:rgba(2,2,0,0.97); text-align:center; padding:20px; overflow-y:auto;
+  }
+  #homeScreen.active{display:flex;}
+  .homeRow{width:100%; max-width:340px; display:flex; justify-content:space-between; align-items:center; gap:10px; background:rgba(232,196,0,0.08); border:1.5px solid var(--yellow-dim); border-radius:8px; padding:10px 14px;}
+  .homeRowLabel{font-weight:900; font-size:12.5px; color:var(--yellow);}
+  .homeRowVal{font-weight:700; font-size:12.5px; color:#cbb96a;}
+  .homeNote{font-size:11px; color:#8a7c4a; max-width:320px; line-height:1.6;}
 
   .weaponHUD{position:absolute; left:16px; bottom:calc(175px + env(safe-area-inset-bottom)); pointer-events:none; text-align:left;}
   .weaponName{font-family:'Archivo Black',sans-serif; font-size:13px; color:var(--yellow); text-shadow:0 0 8px rgba(232,196,0,.6); background:rgba(0,0,0,0.45); padding:4px 10px; border-radius:4px; border:1px solid var(--yellow-dim);}
@@ -290,18 +323,29 @@
 
 <canvas id="renderCanvas"></canvas>
 
+<!-- NAME ENTRY (first visit only) -->
+<div id="nameScreen">
+  <div class="glitchTitle" style="font-size:clamp(28px,8vw,54px);">BACKROOMS</div>
+  <div class="devTag">SOUHAIL ALAOUI — v4.0</div>
+  <div class="hint">شكون نتا؟ اكتب سميتك باش تبدا المغامرة ديالك فالغرف الخلفية...</div>
+  <input id="nameInput" type="text" maxlength="16" placeholder="سميتك هنا...">
+  <button id="nameSubmitBtn" class="restartBtn">دخول</button>
+</div>
+
 <!-- START SCREEN -->
 <div id="startScreen">
   <div class="brandStripe top"></div>
   <div class="logoWrap">
     <div class="glitchTitle">BACKROOMS<span>لا نهاية لهذا المكان</span></div>
   </div>
-  <div class="devTag">SOUHAIL ALAOUI — v3.0 الفوضى</div>
+  <div class="devTag" id="welcomeTag">SOUHAIL ALAOUI — v3.0 الفوضى</div>
   <div class="scrapCount" id="startScrapCount">💰 0 Scrap</div>
   <button id="playBtn">ابدأ</button>
   <button class="restartBtn ghostBtn" id="shopBtnStart">🛒 المتجر</button>
+  <button class="restartBtn ghostBtn" id="homeBtnStart">🏠 بيتي</button>
   <div class="objective">🎯 المهمة: اقتل كل الوحوش الغريبة، دور فالصناديق، وابحث عن البوابة الأرجوانية للنجاة — راقب صحتك النفسية!</div>
   <div class="objective" id="dailyChallengeText" style="color:#63c8ff;"></div>
+  <div class="objective" id="sessionQuestText" style="color:#ffb35a;"></div>
   <div class="hint">
     حرك جهاز اللمس فالجانب الأيسر باش تمشي، ولمس فأي بلاصة أخرى باش تدور الكاميرا. الزر الأحمر لإطلاق النار، وزر 🔄 لتبديل السلاح.
     <br>📦 قرب من صندوق وابقَ ثابت 2 ثواني باش تفتحو (فيه خطر: كيجذب الوحوش).
@@ -339,6 +383,7 @@
   <div class="msgLine" id="msgLine"></div>
   <div id="chestPrompt">📦 ابقَ ثابت لفتح الصندوق<div id="chestProgressBg"><div id="chestProgressFill"></div></div></div>
   <div id="traderPrompt">🧑‍💼 ابقَ ثابت للتحدث مع التاجر الضايع<div id="traderProgressBg"><div id="traderProgressFill"></div></div></div>
+  <div id="chefPrompt">👨‍🍳 عندك لحم؟ ابقَ ثابت باش تعطيه للشيف<div id="chefProgressBg"><div id="chefProgressFill"></div></div></div>
   <div class="weaponHUD"><div class="weaponName" id="weaponName">مسدس</div></div>
 
   <button id="muteBtn">🔊</button>
@@ -392,6 +437,14 @@
   <button class="shopCloseBtn" id="shopCloseBtn">رجوع</button>
 </div>
 
+<!-- HOME BASE (local trophy room — no online friends, single-file game) -->
+<div id="homeScreen">
+  <div class="shopTitle" style="font-size:24px;">🏠 البيت ديالي</div>
+  <div id="homeItemsList"></div>
+  <div class="homeNote">هاد اللعبة ملف واحد بلا سيرفر، فالبيت هنا شخصي وموجود غير عندك — ماشي مشترك مع الأصدقاء.</div>
+  <button class="shopCloseBtn" id="homeCloseBtn">رجوع</button>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
@@ -428,15 +481,21 @@ const ATTACK_DAMAGE = 9;
 const BODY_BASE_Y = 1.25;
 
 const WEAPONS = [
-  {name:'مسدس', dmg:24, cooldown:0.36, unlockAt:0},
-  {name:'مدفع الوجوه', dmg:16, cooldown:0.5, unlockAt:2, effect:'cry'},
-  {name:'شوزن', dmg:46, cooldown:0.62, unlockAt:4},
-  {name:'علكة', dmg:6, cooldown:0.85, unlockAt:6, effect:'gum'},
-  {name:'رشاش', dmg:13, cooldown:0.10, unlockAt:8},
-  {name:'قاذف الكراسي', dmg:38, cooldown:0.9, unlockAt:10, effect:'chair'}
+  {name:'مسدس', dmg:24, cooldown:0.36, unlockAt:0, recoil:0.14, recoilPitch:0, sound:{freq:180,dur:0.06}},
+  {name:'المقلاة', dmg:20, cooldown:0.5, unlockAt:1, effect:'pan', recoil:0.25, recoilPitch:0.02, sound:{bong:true}},
+  {name:'مدفع الوجوه', dmg:16, cooldown:0.5, unlockAt:2, effect:'cry', recoil:0.16, recoilPitch:0.01, sound:{freq:150,dur:0.08}},
+  {name:'رشاش الماء', dmg:0, cooldown:0.2, unlockAt:3, effect:'water', recoil:0.05, recoilPitch:0, sound:{freq:520,dur:0.05}},
+  {name:'شوزن', dmg:46, cooldown:0.62, unlockAt:4, recoil:0.32, recoilPitch:0.045, sound:{freq:90,dur:0.14}},
+  {name:'علكة', dmg:6, cooldown:0.85, unlockAt:6, effect:'gum', recoil:0.1, recoilPitch:0.01, sound:{freq:700,dur:0.05}},
+  {name:'رشاش', dmg:13, cooldown:0.10, unlockAt:8, recoil:0.08, recoilPitch:'jitter', sound:{freq:260,dur:0.04}},
+  {name:'قاذف الكراسي', dmg:38, cooldown:0.9, unlockAt:9, effect:'chair', recoil:0.3, recoilPitch:0.03, sound:{freq:70,dur:0.16}},
+  {name:'سلاح النخبة', dmg:70, cooldown:0.4, unlockAt:9999, effect:'legendary', recoil:0.2, recoilPitch:0.02, sound:{freq:400,dur:0.1}}
 ];
 
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
+
+/* trading cards: 5% drop chance per kill, collect 10 of one kind → legendary weapon */
+const CARD_TYPES = ['ملكة الغرف', 'المقلاة الذهبية', 'الوجه الباكي', 'العلكة النادرة', 'التاجر الضايع'];
 
 /* ---------------- META PROGRESSION (persists across deaths via localStorage) ---------------- */
 const META_KEY = 'backrooms_souhail_meta_v2';
@@ -445,10 +504,10 @@ function loadMeta(){
     const raw = localStorage.getItem(META_KEY);
     if(raw){
       const parsed = JSON.parse(raw);
-      return Object.assign({scrap:0, armor:0, runner:0, luck:0, sanityTraining:0, photos:0}, parsed);
+      return Object.assign({scrap:0, armor:0, runner:0, luck:0, sanityTraining:0, photos:0, playerName:'', cards:{}, legendaryUnlocked:false, furniture:0, title:''}, parsed);
     }
   }catch(e){}
-  return {scrap:0, armor:0, runner:0, luck:0, sanityTraining:0, photos:0};
+  return {scrap:0, armor:0, runner:0, luck:0, sanityTraining:0, photos:0, playerName:'', cards:{}, legendaryUnlocked:false, furniture:0, title:''};
 }
 let meta = loadMeta();
 function saveMeta(){
@@ -493,6 +552,27 @@ function renderShop(){
 }
 function openShop(){ renderShop(); document.getElementById('shopScreen').classList.add('active'); }
 function closeShop(){ document.getElementById('shopScreen').classList.remove('active'); }
+
+/* ---------------- HOME BASE (local single-player trophy room) ---------------- */
+function renderHome(){
+  const list = document.getElementById('homeItemsList');
+  list.innerHTML = '';
+  const rows = [
+    ['🪑 قطع الأثاث', meta.furniture||0],
+    ['📷 صور الألبوم', meta.photos||0],
+    ['🏆 اللقب الحالي', meta.title || 'بلا لقب بعد'],
+    ['🃏 أنواع البطاقات المكتملة', Object.values(meta.cards||{}).filter(c=>c>=10).length + ' / '+CARD_TYPES.length],
+    ['⚔ سلاح النخبة', meta.legendaryUnlocked ? 'مفتوح ✅' : 'مقفول 🔒']
+  ];
+  for(const [label,val] of rows){
+    const row = document.createElement('div');
+    row.className = 'homeRow';
+    row.innerHTML = `<div class="homeRowLabel">${label}</div><div class="homeRowVal">${val}</div>`;
+    list.appendChild(row);
+  }
+}
+function openHome(){ renderHome(); document.getElementById('homeScreen').classList.add('active'); }
+function closeHome(){ document.getElementById('homeScreen').classList.remove('active'); }
 
 /* ---------------- DAILY CHALLENGE ---------------- */
 const DAILY_KEY = 'backrooms_daily_v1';
@@ -938,15 +1018,19 @@ const ORIGINAL_MONSTER_TOTAL = monsters.length;
 
 /* ---------------- CHEST MESHES + LOOT TABLE ---------------- */
 const LOOT_TABLE = [
-  {type:'medkit', weight:22},
-  {type:'battery', weight:14},
-  {type:'tome', weight:12},
-  {type:'sanity', weight:16},
-  {type:'trap', weight:12},
-  {type:'speedBoots', weight:9},
-  {type:'cakeShield', weight:9},
-  {type:'xray', weight:9},
-  {type:'meat', weight:10}
+  {type:'medkit', weight:18},
+  {type:'battery', weight:11},
+  {type:'tome', weight:10},
+  {type:'sanity', weight:13},
+  {type:'trap', weight:10},
+  {type:'speedBoots', weight:7},
+  {type:'cakeShield', weight:7},
+  {type:'xray', weight:7},
+  {type:'meat', weight:8},
+  {type:'butter', weight:6},
+  {type:'saiyan', weight:5},
+  {type:'balloons', weight:6},
+  {type:'furniture', weight:8}
 ];
 function rollLoot(){
   const total = LOOT_TABLE.reduce((s,l)=>s+l.weight,0);
@@ -1052,6 +1136,121 @@ function updateTraderInteraction(dt){
     traderHoldTimer = 0;
     prompt.classList.remove('show');
     fill.style.width = '0%';
+  }
+}
+
+/* ---------------- "Backrooms Diner" CHEF: trade meat for a random powerup ---------------- */
+let chef = null;
+const CHEF_LOOT = ['saiyan','butter','balloons','cakeShield','speedBoots'];
+{
+  const chefCells = openCells.filter(([x,z]) =>
+    distMap[z][x] >= 4 &&
+    !(x===startGX && z===startGZ) && !(x===exitCell[0] && z===exitCell[1]) &&
+    !(trader && x===Math.round(trader.x/CELL+GW/2) && z===Math.round(trader.z/CELL+GH/2))
+  );
+  if(chefCells.length){
+    const [cgx,cgz] = chefCells[Math.floor(Math.random()*chefCells.length)];
+    const [cwx,cwz] = gridToWorld(cgx,cgz);
+    const mesh = createMonsterMesh(55.5);
+    mesh.traverse(o=>{
+      if(!o.material) return;
+      if(o.material.emissive){ o.material.emissive.setHex(0x4a2a10); o.material.emissiveIntensity=0.5; }
+      if(o.geometry && o.geometry.type==='SphereGeometry'){ o.material.color.setHex(0xffe066); }
+    });
+    // little white "chef hat" cube on top
+    const hat = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.4,0.5), new THREE.MeshStandardMaterial({color:0xffffff}));
+    hat.position.set(0, 1.35, 0);
+    mesh.add(hat);
+    mesh.position.set(cwx, BODY_BASE_Y, cwz);
+    scene.add(mesh);
+    chef = {mesh, x:cwx, z:cwz, greeted:false};
+  }
+}
+let chefHoldTimer = 0;
+const CHEF_HOLD_TIME = 1.4;
+const CHEF_RADIUS = 1.5;
+function updateChefInteraction(dt){
+  if(!chef) return;
+  const prompt = document.getElementById('chefPrompt');
+  const fill = document.getElementById('chefProgressFill');
+  const d = Math.hypot(camera.position.x-chef.x, camera.position.z-chef.z);
+  if(d < CHEF_RADIUS){
+    if(!chef.greeted){ chef.greeted = true; showMsg('👨‍🍳 "مرحبا بيك فـ Backrooms Diner! عندك لحم؟"'); }
+    if(meatCount>0){
+      prompt.classList.add('show');
+      const isStill = Math.hypot(velX,velZ) < 0.3;
+      if(isStill){
+        chefHoldTimer += dt;
+        fill.style.width = Math.min(100, (chefHoldTimer/CHEF_HOLD_TIME)*100)+'%';
+        if(chefHoldTimer >= CHEF_HOLD_TIME){
+          chefHoldTimer = 0; fill.style.width='0%';
+          meatCount--;
+          applyLoot(CHEF_LOOT[Math.floor(Math.random()*CHEF_LOOT.length)]);
+          showMsg('👨‍🍳 "بالصحة والراحة! هاك شي حاجة تعاونك"');
+        }
+      } else {
+        chefHoldTimer = Math.max(0, chefHoldTimer - dt*2);
+        fill.style.width = Math.min(100, (chefHoldTimer/CHEF_HOLD_TIME)*100)+'%';
+      }
+    } else {
+      prompt.classList.remove('show');
+    }
+  } else {
+    chefHoldTimer = 0;
+    prompt.classList.remove('show');
+    fill.style.width = '0%';
+  }
+}
+
+/* ---------------- SUPERMARKET CARTS: walk over one to start a timed ride ---------------- */
+const cartPickups = [];             // شوبينغ كارط pickups scattered in the maze
+const cartGeo = new THREE.BoxGeometry(0.6,0.6,0.9);
+const cartMat = new THREE.MeshStandardMaterial({color:0xbfd8e8, metalness:0.6, roughness:0.35, wireframe:true});
+{
+  const cartCells = openCells.filter(([x,z]) =>
+    distMap[z][x] >= 3 &&
+    !(x===startGX && z===startGZ) && !(x===exitCell[0] && z===exitCell[1])
+  );
+  const shuffled = cartCells.slice();
+  for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=shuffled[i]; shuffled[i]=shuffled[j]; shuffled[j]=t; }
+  const cartCount = Math.min(3, shuffled.length);
+  for(let i=0;i<cartCount;i++){
+    const [cgx,cgz] = shuffled[i];
+    const [cwx,cwz] = gridToWorld(cgx,cgz);
+    const mesh = new THREE.Mesh(cartGeo, cartMat.clone());
+    mesh.position.set(cwx, 0.35, cwz);
+    scene.add(mesh);
+    cartPickups.push({mesh, taken:false, x:cwx, z:cwz});
+  }
+}
+function updateCartPickups(dt){
+  for(const c of cartPickups){
+    if(c.taken) continue;
+    c.mesh.rotation.y += dt*1.2;
+    const d = Math.hypot(camera.position.x-c.x, camera.position.z-c.z);
+    if(d < 1.0){
+      c.taken = true;
+      scene.remove(c.mesh);
+      cartRideActive = true;
+      cartRideTimer = 15;
+      showMsg('🛒 ركبتي العربة! سرعة أكبر وتقدر تدعس الوحوش (15 ثانية)');
+    }
+  }
+}
+let cartBumpCooldownMap = new WeakMap();
+function updateCartBumps(){
+  if(!cartRideActive) return;
+  const camPos = camera.position;
+  for(const m of monsters){
+    if(!m.alive || m.tamed || m.isHallucination) continue;
+    const d = Math.hypot(m.mesh.position.x-camPos.x, m.mesh.position.z-camPos.z);
+    if(d < 1.1){
+      const last = cartBumpCooldownMap.get(m) || 0;
+      if(performance.now() - last > 500){
+        cartBumpCooldownMap.set(m, performance.now());
+        hitMonster(m, 22);
+      }
+    }
   }
 }
 
@@ -1179,6 +1378,34 @@ function playGrowl(){
     o.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime+0.3);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.32);
     o.stop(audioCtx.currentTime+0.33);
+  }catch(e){}
+}
+function playBong(){
+  if(!audioCtx || !audioOn) return;
+  try{
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type='sine'; o.frequency.value = 300;
+    g.gain.value = 0.12;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    o.frequency.exponentialRampToValueAtTime(90, audioCtx.currentTime+0.35);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.4);
+    o.stop(audioCtx.currentTime+0.42);
+  }catch(e){}
+}
+function playZap(){
+  if(!audioCtx || !audioOn) return;
+  try{
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type='sawtooth'; o.frequency.value = 900;
+    g.gain.value = 0.09;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    o.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime+0.5);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.5);
+    o.stop(audioCtx.currentTime+0.5);
   }catch(e){}
 }
 
@@ -1348,8 +1575,29 @@ document.getElementById('shopCloseBtn').addEventListener('click', closeShop);
 document.getElementById('shopBtnStart').addEventListener('click', openShop);
 document.getElementById('shopBtnOver').addEventListener('click', openShop);
 document.getElementById('shopBtnWin').addEventListener('click', openShop);
+document.getElementById('homeBtnStart').addEventListener('click', openHome);
+document.getElementById('homeCloseBtn').addEventListener('click', closeHome);
 renderShop();
-document.getElementById('dailyChallengeText').textContent = dailyChallenge.desc + (dailyDone ? ' ✅ (مكمل اليوم)' : '');
+
+/* ---------------- NAME ENTRY (first-visit onboarding) ---------------- */
+function applyWelcomeName(){
+  const tag = document.getElementById('welcomeTag');
+  if(meta.playerName){ tag.textContent = `أهلا ${meta.playerName} — SOUHAIL ALAOUI v4.0`; }
+  else { tag.textContent = 'SOUHAIL ALAOUI — v4.0'; }
+}
+if(meta.playerName){
+  document.getElementById('nameScreen').style.display = 'none';
+}
+applyWelcomeName();
+function submitName(){
+  const val = document.getElementById('nameInput').value.trim();
+  meta.playerName = val || 'مسافر الغرف الخلفية';
+  saveMeta();
+  applyWelcomeName();
+  document.getElementById('nameScreen').style.display = 'none';
+}
+document.getElementById('nameSubmitBtn').addEventListener('click', submitName);
+document.getElementById('nameInput').addEventListener('keydown', e=>{ if(e.key==='Enter') submitName(); });
 
 /* ---------------- START ---------------- */
 document.getElementById('playBtn').addEventListener('click', ()=>{
@@ -1400,6 +1648,8 @@ function tryMove(nx, nz, radius){
 
 /* ---------------- COMBAT STATE ---------------- */
 let unlockedWeapons = [0];
+const LEGENDARY_IDX = WEAPONS.findIndex(w=>w.effect==='legendary');
+if(meta.legendaryUnlocked && LEGENDARY_IDX>-1) unlockedWeapons.push(LEGENDARY_IDX);
 let currentWeaponIdx = 0;
 let fireTimer = 0;
 let recoil = 0;
@@ -1428,6 +1678,53 @@ let chestsOpenedCount = 0;
 let shotgunKillCount = 0;
 const SHOTGUN_IDX = WEAPONS.findIndex(w=>w.name==='شوزن');
 const dailyChallenge = getDailyChallenge();
+
+/* ---------------- SESSION "DUMB QUEST" (random each run, separate from the daily one) ---------------- */
+let sessionQuest = null;
+let sessionQuestDone = false;
+const QUEST_LIST = [
+  {id:'panHits', desc:'😆 مهمة: اضرب 5 وحوش بالمقلاة', target:5, title:'ملك المقلاة'},
+  {id:'waterZaps', desc:'😆 مهمة: صعق الوحوش بالماء والبرق مرتين', target:2, title:'سيد البرق'},
+  {id:'chestsQuest', desc:'😆 مهمة: افتح صندوقين', target:2, title:'صياد الصناديق'},
+  {id:'furnitureQuest', desc:'😆 مهمة: اجمع 3 قطع أثاث لبيتك', target:3, title:'مؤثث البيت'}
+];
+function pickSessionQuest(){
+  sessionQuest = QUEST_LIST[Math.floor(Math.random()*QUEST_LIST.length)];
+  sessionQuestDone = false;
+}
+function checkSessionQuestProgress(){
+  if(!sessionQuest || sessionQuestDone) return;
+  let progress = 0;
+  if(sessionQuest.id==='panHits') progress = panKillCount;
+  else if(sessionQuest.id==='waterZaps') progress = waterZapCount;
+  else if(sessionQuest.id==='chestsQuest') progress = chestsOpenedCount;
+  else if(sessionQuest.id==='furnitureQuest') progress = meta.furniture||0;
+  if(progress >= sessionQuest.target){
+    sessionQuestDone = true;
+    meta.scrap += 30;
+    meta.title = sessionQuest.title;
+    saveMeta();
+    showEventBanner(`🏆 المهمة كملات! +30 خردة — لقب: ${sessionQuest.title}`, 4500);
+    updateHUD();
+  }
+}
+pickSessionQuest();
+document.getElementById('dailyChallengeText').textContent = dailyChallenge.desc + (dailyDone ? ' ✅ (مكمل اليوم)' : '');
+document.getElementById('sessionQuestText').textContent = sessionQuest.desc;
+
+/* ---------------- v4.0 FUN PACK 2 state ---------------- */
+const wetMonsters = new Set();      // رشاش الماء tracking toward the lightning chain
+let saiyanTimer = 0;                // وضعية سوبر سايان
+const SAIYAN_SPEED_MULT = 1.6;
+const SAIYAN_SHOCKWAVE_RADIUS = 3.5;
+const SAIYAN_SHOCKWAVE_DMG = 18;
+let panKillCount = 0;               // for the "دمى المقلاة" side quest
+let waterZapCount = 0;              // for the water-gun quest
+let cartRideActive = false;
+let cartRideTimer = 0;
+const CART_SPEED_MULT = 2.0;
+const fallingSigns = [];            // الزلزال الكوميدي falling signage
+let butterTimer = 0;                // الزبدة — slippery floor
 
 /* Sanity ("توتر وهدوء") state */
 const maxSanity = 100 + meta.sanityTraining*20;
@@ -1482,6 +1779,20 @@ function killMonster(m){
   if(dailyChallenge.id==='kill12') completeDailyIfDone(killCount);
   if(dailyChallenge.id==='scrap15') completeDailyIfDone(scrapEarnedThisRun);
   if(dailyChallenge.id==='shotgun5') completeDailyIfDone(shotgunKillCount);
+
+  // v4.0 trading cards: 5% chance per kill
+  if(Math.random() < 0.05){
+    const type = CARD_TYPES[Math.floor(Math.random()*CARD_TYPES.length)];
+    meta.cards[type] = (meta.cards[type]||0)+1;
+    saveMeta();
+    showMsg(`🃏 بطاقة نادرة: "${type}" (${meta.cards[type]}/10)`);
+    if(meta.cards[type]>=10 && !meta.legendaryUnlocked){
+      meta.legendaryUnlocked = true;
+      saveMeta();
+      if(LEGENDARY_IDX>-1 && unlockedWeapons.indexOf(LEGENDARY_IDX)===-1) unlockedWeapons.push(LEGENDARY_IDX);
+      showEventBanner('🏆 جمعتي مجموعة البطاقات! سلاح النخبة اتفتح للأبد', 5000);
+    }
+  }
 
   for(let i=0;i<WEAPONS.length;i++){
     if(killCount>=WEAPONS[i].unlockAt && unlockedWeapons.indexOf(i)===-1){
@@ -1553,6 +1864,49 @@ function hitMonster(m, dmg){
     } else {
       killMonster(m);
     }
+  }
+}
+
+/* ---------------- WATER GUN → LIGHTNING CHAIN ---------------- */
+function triggerLightningChain(){
+  showMsg('⚡ البرق ضرب! الوحوش المبللة تصعقو كاملين!');
+  playZap();
+  const flash = document.getElementById('dmgFlash');
+  flash.style.background = 'radial-gradient(circle, rgba(160,220,255,0.5) 0%, rgba(160,220,255,0) 70%)';
+  flash.classList.add('show');
+  setTimeout(()=>{ flash.classList.remove('show'); flash.style.background=''; }, 220);
+  for(const m of Array.from(wetMonsters)){
+    if(m.alive && !m.isHallucination){
+      spawnHitSpark(new THREE.Vector3(m.mesh.position.x, m.mesh.position.y+0.6, m.mesh.position.z));
+      hitMonster(m, 999); // instant defeat via the lightning
+    }
+    m.wet = false;
+  }
+  wetMonsters.clear();
+  waterZapCount++;
+  checkSessionQuestProgress();
+}
+
+/* ---------------- BALLOON BOMB: fills the room + distracts nearby monsters ---------------- */
+const balloonMeshes = [];
+function spawnBalloons(){
+  const colors = [0xff5a7a, 0x5ab4ff, 0xffe066, 0x6bffb8, 0xc98bff];
+  for(let i=0;i<14;i++){
+    const balloon = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 8, 8),
+      new THREE.MeshStandardMaterial({color:colors[i%colors.length], roughness:0.4, emissive:0x220022, emissiveIntensity:0.15})
+    );
+    const ang = Math.random()*Math.PI*2, r = Math.random()*3.2;
+    balloon.position.set(camera.position.x+Math.cos(ang)*r, 1.2+Math.random()*1.6, camera.position.z+Math.sin(ang)*r);
+    balloon.userData.bob = Math.random()*10;
+    scene.add(balloon);
+    balloonMeshes.push(balloon);
+    setTimeout(()=>{ scene.remove(balloon); const idx=balloonMeshes.indexOf(balloon); if(idx>-1) balloonMeshes.splice(idx,1); }, 12000);
+  }
+  for(const m of monsters){
+    if(!m.alive || m.isHallucination || m.tamed) continue;
+    const d = Math.hypot(m.mesh.position.x-camera.position.x, m.mesh.position.z-camera.position.z);
+    if(d < 8) m.distractedUntil = performance.now()+12000;
   }
 }
 
@@ -1680,6 +2034,7 @@ function openChest(c){
 
   chestsOpenedCount++;
   if(dailyChallenge.id==='chest3') completeDailyIfDone(chestsOpenedCount);
+  if(sessionQuest && sessionQuest.id==='chestsQuest') checkSessionQuestProgress();
 
   applyLoot(rollLoot());
 
@@ -1726,6 +2081,22 @@ function applyLoot(type){
   } else if(type==='meat'){
     meatCount++;
     showMsg(`🥩 لحم! (${meatCount}) — إلا خليتي وحش يهرب بصحة قليلة غادي يولي حيوانك الأليف`);
+  } else if(type==='butter'){
+    butterTimer = 10;
+    showMsg('🧈 زبدة! الأرض ولات زلقة والوحوش غادي تطيح!');
+  } else if(type==='saiyan'){
+    saiyanTimer = 8;
+    camera.fov = 84;
+    camera.updateProjectionMatrix();
+    showMsg('🟡 وضعية سوبر سايان! سرعة + قوة + موجات صدمة (8 ثواني)');
+  } else if(type==='balloons'){
+    spawnBalloons();
+    showMsg('🎈 قنبلة بالونات! الوحوش القريبة نساوك ونساو');
+  } else if(type==='furniture'){
+    meta.furniture = (meta.furniture||0)+1;
+    saveMeta();
+    showMsg(`🪑 قطعة أثاث لبيتك! (${meta.furniture} إجمالي)`);
+    if(sessionQuest && sessionQuest.id==='furnitureQuest') checkSessionQuestProgress();
   }
   updateHUD();
 }
@@ -1772,10 +2143,30 @@ function showEventBanner(text, ms){
 
 function triggerRandomEvent(){
   if(gameEnded) return;
-  const options = ['blackout','ambush','fog','chairRain','cleanupAlarm','dancingMonster'];
+  const options = ['blackout','ambush','fog','chairRain','cleanupAlarm','dancingMonster','workout','earthquake'];
   const type = options[Math.floor(Math.random()*options.length)];
 
-  if(type==='chairRain'){
+  if(type==='workout'){
+    showEventBanner('🏋️ وقت الرياضة! كل الوحوش كيديرو سكوات', 3500);
+    for(const m of monsters){
+      if(m.alive && !m.isHallucination && !m.tamed) m.squattingUntil = performance.now()+10000;
+    }
+    activeEvent = null;
+  } else if(type==='earthquake'){
+    showEventBanner('🌍 زلزال! السقف كيهز...', 4000);
+    activeEvent = {type:'earthquake', timeLeft:4};
+    const signMat = new THREE.MeshStandardMaterial({color:0xe8c400, roughness:0.6});
+    for(let i=0;i<6;i++){
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.4,0.4), signMat);
+      const ang = Math.random()*Math.PI*2, r = Math.random()*4;
+      sign.position.set(camera.position.x+Math.cos(ang)*r, WALL_H, camera.position.z+Math.sin(ang)*r);
+      sign.rotation.y = Math.random()*Math.PI;
+      sign.userData.vy = -(1.5+Math.random()*1.5);
+      sign.userData.spin = (Math.random()-0.5)*4;
+      scene.add(sign);
+      fallingSigns.push(sign);
+    }
+  } else if(type==='chairRain'){
     showEventBanner('🪑 مطر الكراسي الصفراء!', 3000);
     const chairMat = new THREE.MeshStandardMaterial({color:0xffd23b, roughness:0.7});
     for(let i=0;i<10;i++){
@@ -1847,16 +2238,12 @@ function fireWeapon(){
   fireTimer = w.cooldown;
   muzzleFlash.intensity = 3;
 
-  // v2.0: each weapon has its own sound + recoil personality
-  if(currentWeaponIdx===0){        // مسدس — snappy, neutral
-    recoil = 0.14; recoilPitch = 0;
-    playShotBlip(180, 0.06);
-  } else if(currentWeaponIdx===1){ // شوزن — heavy kick, camera jumps up
-    recoil = 0.32; recoilPitch = 0.045;
-    playShotBlip(90, 0.14);
-  } else {                          // رشاش — fast, tiny jittery shake
-    recoil = 0.08; recoilPitch = (Math.random()-0.5)*0.012;
-    playShotBlip(260, 0.04);
+  // v4.0: recoil/sound driven by the weapon's own profile, not its array position
+  recoil = w.recoil!=null ? w.recoil : 0.14;
+  recoilPitch = w.recoilPitch==='jitter' ? (Math.random()-0.5)*0.012 : (w.recoilPitch||0);
+  if(w.sound){
+    if(w.sound.bong) playBong();
+    else playShotBlip(w.sound.freq, w.sound.dur);
   }
 
   camera.getWorldDirection(_camDir);
@@ -1876,6 +2263,13 @@ function fireWeapon(){
 
   if(closest){
     hitMonster(closest, w.dmg*dmgMult + bonusDamage);
+    if(saiyanTimer>0){
+      const originPos = closest.mesh.position.clone();
+      for(const other of monsters){
+        if(other===closest || !other.alive || other.tamed || other.isHallucination) continue;
+        if(other.mesh.position.distanceTo(originPos) < SAIYAN_SHOCKWAVE_RADIUS) hitMonster(other, SAIYAN_SHOCKWAVE_DMG);
+      }
+    }
     if(closest.alive && !closest.tamed && w.effect){
       if(w.effect==='cry'){
         closest.frozenUntil = performance.now()+2500;
@@ -1892,6 +2286,22 @@ function fireWeapon(){
         if(tryMove(kx, closest.mesh.position.z, closest.radius)) closest.mesh.position.x = kx;
         if(tryMove(closest.mesh.position.x, kz, closest.radius)) closest.mesh.position.z = kz;
         showMsg('🪑 كرسي صفراء طايرة!');
+      } else if(w.effect==='pan'){
+        closest.launchedUntil = performance.now()+900;
+        closest.launchVy = 9;
+        closest.launchStartY = closest.mesh.position.y;
+        panKillCount++;
+        checkSessionQuestProgress();
+        showMsg('🍳 بونغ! طار للسقف!');
+      } else if(w.effect==='water'){
+        if(!closest.wet){
+          closest.wet = true;
+          wetMonsters.add(closest);
+          const body = closest.mesh.children[0];
+          if(body && body.material){ body.material.color.lerp(new THREE.Color(0x3388ff), 0.55); }
+          showMsg(`💦 بللتيه! (${wetMonsters.size}/3)`);
+          if(wetMonsters.size>=3) triggerLightningChain();
+        }
       }
     }
   }
@@ -1955,7 +2365,8 @@ function animate(){
     let targetVX = 0, targetVZ = 0;
     if(len > 0.05){
       const nmx = mx/Math.max(len,1), nmz = mz/Math.max(len,1);
-      const speed = MOVE_SPEED * metaSpeedMult * (sprintOn||keys['ShiftLeft'] ? SPRINT_MULT : 1) * Math.min(1,len) * (speedBoostTimer>0 ? 2.1 : 1);
+      const speedMult = (speedBoostTimer>0 ? 2.1 : 1) * (saiyanTimer>0 ? SAIYAN_SPEED_MULT : 1) * (cartRideActive ? CART_SPEED_MULT : 1);
+      const speed = MOVE_SPEED * metaSpeedMult * (sprintOn||keys['ShiftLeft'] ? SPRINT_MULT : 1) * Math.min(1,len) * speedMult;
       const sinY = Math.sin(yaw), cosY = Math.cos(yaw);
       const fx = -sinY, fz = -cosY; // forward
       const rx = cosY, rz = -sinY; // right
@@ -1987,6 +2398,9 @@ function animate(){
     // v2.0: chests, sanity, hallucinations, ambient drips, random events
     updateChestInteraction(dt);
     updateTraderInteraction(dt);
+    updateChefInteraction(dt);
+    updateCartPickups(dt);
+    updateCartBumps();
 
     // --- Sanity system: darkness drains it, light/kills restore it ---
     let minLightDist = Infinity;
@@ -1998,6 +2412,7 @@ function animate(){
 
     const lowSanity = sanity < 30;
     canvas.classList.toggle('lowSanity', lowSanity);
+    canvas.classList.toggle('earthquake', !!(activeEvent && activeEvent.type==='earthquake'));
     if(lowSanity && Math.random() < 0.004) playWhisper();
 
     if(sanity <= 0 && !hallucinationActive){
@@ -2056,126 +2471,18 @@ function animate(){
       if(!m.alive) continue;
       const mp = m.mesh.position;
 
-      // frozen (crying / gummed) monsters stay put and can't attack
-      if(m.frozenUntil && performance.now() < m.frozenUntil){
-        mp.y = BODY_BASE_Y + Math.sin(performance.now()*0.001*2.4 + m.mesh.userData.bobPhase)*0.03;
-        continue;
-      }
-
-      // dancing monsters (funny event) just spin harmlessly
-      if(m.dancingUntil && performance.now() < m.dancingUntil){
-        m.mesh.rotation.y += dt*6;
-        mp.y = BODY_BASE_Y + Math.abs(Math.sin(performance.now()*0.006))*0.3;
-        continue;
-      }
-
-      // the tamed pet follows the player and fights nearby hostiles instead of the AI below
-      if(m.tamed){
-        updatePet(m, dt, camPos);
-        continue;
-      }
-
-      const dx = camPos.x-mp.x, dz = camPos.z-mp.z;
-      const dist = Math.hypot(dx,dz);
-      const alerted = m.alertedUntil && performance.now() < m.alertedUntil;
-
-      if(alerted || dist < CHASE_RADIUS) m.state='chase';
-      else if(dist > CHASE_RADIUS*1.6) m.state='wander';
-
-      if(!m.isHallucination){
-        if(m.state==='chase' && !m.wasSeen){ sanity = Math.max(0, sanity-2); m.wasSeen = true; }
-        else if(m.state==='wander'){ m.wasSeen = false; }
-      }
-
-      let moveX=0, moveZ=0, speed=MONSTER_SPEED * (speedBoostTimer>0 ? 0.35 : 1);
-      if(m.state==='chase'){
-        anyChasing = true;
-        speed = CHASE_SPEED * (lowSanity ? 1.35 : 1) * (speedBoostTimer>0 ? 0.35 : 1);
-        if(dist>0.01){ moveX = dx/dist; moveZ = dz/dist; }
-        m.attackTimer -= dt;
-        if(dist < ATTACK_RADIUS && m.attackTimer<=0){
-          m.attackTimer = ATTACK_COOLDOWN;
-          damagePlayer(ATTACK_DAMAGE);
-          playGrowl();
-        }
-      } else {
-        m.wanderTimer -= dt;
-        if(!m.wanderTarget || m.wanderTimer<=0){
-          const ang = Math.random()*Math.PI*2;
-          const d2 = 2+Math.random()*3;
-          m.wanderTarget = [mp.x+Math.cos(ang)*d2, mp.z+Math.sin(ang)*d2];
-          m.wanderTimer = 2+Math.random()*3;
-        }
-        const wdx = m.wanderTarget[0]-mp.x, wdz = m.wanderTarget[1]-mp.z;
-        const wdist = Math.hypot(wdx,wdz);
-        if(wdist>0.15){ moveX=wdx/wdist; moveZ=wdz/wdist; }
-      }
-
-      const stepX = moveX*speed*dt, stepZ = moveZ*speed*dt;
-      if(tryMove(mp.x+stepX, mp.z, m.radius)) mp.x += stepX;
-      if(tryMove(mp.x, mp.z+stepZ, m.radius)) mp.z += stepZ;
-
-      const bt = performance.now()*0.001;
-      mp.y = BODY_BASE_Y + Math.sin(bt*2.4 + m.mesh.userData.bobPhase)*0.07;
-      m.mesh.lookAt(camPos.x, mp.y, camPos.z);
-    }
-
-    // crosshair "hot" state — cheap reticle-on-target check, reusing the same math as fireWeapon
-    let onTarget = false;
-    camera.getWorldDirection(_camDir);
-    for(const m of monsters){
-      if(!m.alive || m.tamed) continue;
-      const mp = m.mesh.position;
-      const tx = mp.x-camPos.x, ty = mp.y-camPos.y, tz = mp.z-camPos.z;
-      const t = tx*_camDir.x + ty*_camDir.y + tz*_camDir.z;
-      if(t<=0 || t>40) continue;
-      _closePt.set(camPos.x+_camDir.x*t, camPos.y+_camDir.y*t, camPos.z+_camDir.z*t);
-      if(_closePt.distanceTo(mp) < 0.9){ onTarget = true; break; }
-    }
-    document.getElementById('crosshair').classList.toggle('hot', onTarget);
-
-    // win check
-    if(exitOpen){
-      const dxE = camPos.x-exitWX, dzE = camPos.z-exitWZ;
-      if(Math.hypot(dxE,dzE) < 1.6) winGame();
-    }
-  }
-
-  // flicker fluorescent lights (always runs — cheap, small light count)
-  const t = performance.now()*0.001;
-  for(const L of lights){
-    const flick = 0.75 + 0.25*Math.sin(t*7 + L.phase) + (Math.random()<0.01 ? -0.6 : 0);
-    const val = Math.max(0.15, Math.min(1, flick));
-    L.light.intensity = L.baseI * val;
-    if(L.mesh) L.mesh.material.color.setRGB(1, 0.95*val+0.05, 0.6*val+0.1);
-  }
-
-  // v3.0 timers: speed boots / x-ray goggles decay every frame
-  speedBoostTimer = Math.max(0, speedBoostTimer - dt);
-  if(xrayTimer>0){
-    xrayTimer = Math.max(0, xrayTimer - dt);
-    if(xrayTimer<=0){
-      for(const m of monsters){
-        m.mesh.traverse(o=>{ if(o.material){ o.material.depthTest = true; } });
-        m.mesh.renderOrder = 0;
-      }
-    }
-  }
-
-  if(flashOn) batteryPct = Math.max(0, batteryPct - dt*0.15);
-  document.getElementById('battery').textContent = `🔋 ${Math.round(batteryPct)}%`;
-  batteryBoostTimer = Math.max(0, batteryBoostTimer - dt);
-  const boostMult = batteryBoostTimer > 0 ? 1.7 : 1;
-  if(flashOn) flashlight.intensity = 2.2 * boostMult * Math.max(0.15, batteryPct/100);
-
-  document.getElementById('sanityFill').style.width = Math.max(0,(sanity/maxSanity)*100)+'%';
-  document.getElementById('sanityLabel').textContent = Math.max(0,Math.round(sanity))+' SANITY';
-
-  renderer.render(scene, camera);
-}
-animate();
-
-})();
-</script>
-</body>
-</html>
+      // frying-pan launch: monster flies up in an arc, ignores everything else meanwhile
+      if(m.launchedUntil){
+        const remain = m.launchedUntil - performance.now();
+        if(remain > 0){
+          const elapsed = 0.9 - remain/1000;
+          m.launchVy -= dt*18; // gravity
+          mp.y = Math.max(BODY_BASE_Y, mp.y + m.launchVy*dt);
+          m.mesh.rotation.x += dt*10;
+          m.mesh.rotation.z += dt*6;
+          continue;
+        } else {
+          m.launchedUntil = null;
+          mp.y = BODY_BASE_Y;
+          m.mesh.rotation.x = 0; m.mesh.rotation.z = 0;
+          if(dailyChallenge){ /* no-op
