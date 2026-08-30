@@ -159,6 +159,25 @@
   #chestProgressBg{width:160px; height:9px; margin:6px auto 0; border:2px solid #ffdd66; border-radius:6px; overflow:hidden; background:rgba(0,0,0,0.5);}
   #chestProgressFill{height:100%; width:0%; background:#ffdd66;}
 
+  #traderPrompt{
+    position:absolute; bottom:calc(272px + env(safe-area-inset-bottom)); left:0; right:0; text-align:center;
+    font-family:'Archivo Black',sans-serif; font-size:12.5px; color:#8fe0ff;
+    text-shadow:0 0 10px rgba(143,224,255,0.7); opacity:0; transition:opacity .3s; padding:0 20px;
+  }
+  #traderPrompt.show{opacity:1;}
+  #traderProgressBg{width:160px; height:9px; margin:6px auto 0; border:2px solid #8fe0ff; border-radius:6px; overflow:hidden; background:rgba(0,0,0,0.5);}
+  #traderProgressFill{height:100%; width:0%; background:#8fe0ff;}
+
+  #photoBtn{left:24px; bottom:calc(178px + env(safe-area-inset-bottom)); width:58px; height:58px; font-size:22px;}
+
+  #photoOverlay{
+    position:fixed; inset:0; z-index:80; display:none; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; background:rgba(0,0,0,0.92); padding:20px;
+  }
+  #photoOverlay.active{display:flex;}
+  #photoOverlay img{max-width:92vw; max-height:60vh; border:3px solid var(--yellow); border-radius:6px; box-shadow:0 0 30px rgba(232,196,0,0.4);}
+  .photoBtnRow{display:flex; gap:12px;}
+
   #eventBanner{
     position:fixed; top:calc(110px + env(safe-area-inset-top)); left:50%; transform:translate(-50%,0); z-index:25;
     font-family:'Archivo Black',sans-serif; font-size:14px; color:#ff5a3c; background:rgba(0,0,0,0.72);
@@ -277,15 +296,19 @@
   <div class="logoWrap">
     <div class="glitchTitle">BACKROOMS<span>لا نهاية لهذا المكان</span></div>
   </div>
-  <div class="devTag">SOUHAIL ALAOUI — v2.0</div>
+  <div class="devTag">SOUHAIL ALAOUI — v3.0 الفوضى</div>
   <div class="scrapCount" id="startScrapCount">💰 0 Scrap</div>
   <button id="playBtn">ابدأ</button>
   <button class="restartBtn ghostBtn" id="shopBtnStart">🛒 المتجر</button>
   <div class="objective">🎯 المهمة: اقتل كل الوحوش الغريبة، دور فالصناديق، وابحث عن البوابة الأرجوانية للنجاة — راقب صحتك النفسية!</div>
+  <div class="objective" id="dailyChallengeText" style="color:#63c8ff;"></div>
   <div class="hint">
     حرك جهاز اللمس فالجانب الأيسر باش تمشي، ولمس فأي بلاصة أخرى باش تدور الكاميرا. الزر الأحمر لإطلاق النار، وزر 🔄 لتبديل السلاح.
     <br>📦 قرب من صندوق وابقَ ثابت 2 ثواني باش تفتحو (فيه خطر: كيجذب الوحوش).
     <br>🧠 كل ما بقيتي فالظلام كتنقص صحتك النفسية — دخل للضوء أو اقتل وحش باش ترجعها.
+    <br>🐾 إلا عندك لحم وضربتي وحش ميت، غادي يتروض ويولي حيوانك الأليف.
+    <br>🧑‍💼 كاين تاجر ضايع فالمتاهة، قرب منو باش تشري بالخردة.
+    <br>📷 زر الكاميرا كيخليك تصور الغرف الخلفية وتصايب ألبوم.
     <br><b>على الكمبيوتر:</b> WASD للحركة + الماوس للدوران + كليك أو Space لإطلاق النار.
   </div>
   <div class="brandStripe bottom"></div>
@@ -315,6 +338,7 @@
   <div class="crosshair" id="crosshair"></div>
   <div class="msgLine" id="msgLine"></div>
   <div id="chestPrompt">📦 ابقَ ثابت لفتح الصندوق<div id="chestProgressBg"><div id="chestProgressFill"></div></div></div>
+  <div id="traderPrompt">🧑‍💼 ابقَ ثابت للتحدث مع التاجر الضايع<div id="traderProgressBg"><div id="traderProgressFill"></div></div></div>
   <div class="weaponHUD"><div class="weaponName" id="weaponName">مسدس</div></div>
 
   <button id="muteBtn">🔊</button>
@@ -327,10 +351,21 @@
 
   <button class="actionBtn" id="flashlightBtn">🔦</button>
   <button class="actionBtn" id="sprintBtn">⚡</button>
+  <button class="actionBtn" id="photoBtn">📷</button>
   <button id="fireBtn">🔫</button>
   <button id="weaponBtn">🔄</button>
 
   <div id="dmgFlash"></div>
+</div>
+
+<div id="photoOverlay">
+  <div class="shopTitle" style="font-size:20px;">📸 صورة من الغرف الخلفية</div>
+  <img id="photoImg" alt="Backrooms photo">
+  <div class="scrapCount" id="photoAlbumCount">ألبوم: 0 صورة</div>
+  <div class="photoBtnRow">
+    <a class="restartBtn" id="photoDownloadBtn" download="backrooms-photo.jpg" style="text-decoration:none;">تحميل</a>
+    <button class="restartBtn ghostBtn" id="photoCloseBtn">رجوع للعبة</button>
+  </div>
 </div>
 
 <!-- GAME OVER -->
@@ -394,8 +429,11 @@ const BODY_BASE_Y = 1.25;
 
 const WEAPONS = [
   {name:'مسدس', dmg:24, cooldown:0.36, unlockAt:0},
+  {name:'مدفع الوجوه', dmg:16, cooldown:0.5, unlockAt:2, effect:'cry'},
   {name:'شوزن', dmg:46, cooldown:0.62, unlockAt:4},
-  {name:'رشاش', dmg:13, cooldown:0.10, unlockAt:8}
+  {name:'علكة', dmg:6, cooldown:0.85, unlockAt:6, effect:'gum'},
+  {name:'رشاش', dmg:13, cooldown:0.10, unlockAt:8},
+  {name:'قاذف الكراسي', dmg:38, cooldown:0.9, unlockAt:10, effect:'chair'}
 ];
 
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -407,10 +445,10 @@ function loadMeta(){
     const raw = localStorage.getItem(META_KEY);
     if(raw){
       const parsed = JSON.parse(raw);
-      return Object.assign({scrap:0, armor:0, runner:0, luck:0, sanityTraining:0}, parsed);
+      return Object.assign({scrap:0, armor:0, runner:0, luck:0, sanityTraining:0, photos:0}, parsed);
     }
   }catch(e){}
-  return {scrap:0, armor:0, runner:0, luck:0, sanityTraining:0};
+  return {scrap:0, armor:0, runner:0, luck:0, sanityTraining:0, photos:0};
 }
 let meta = loadMeta();
 function saveMeta(){
@@ -425,6 +463,7 @@ const SHOP_ITEMS = [
 ];
 function upgradeCost(item){ return Math.round(item.baseCost * Math.pow(item.costMult, meta[item.key])); }
 function renderShop(){
+  document.querySelector('#shopScreen .shopTitle').textContent = '🛒 المتجر';
   document.getElementById('shopScrapCount').textContent = `💰 ${meta.scrap} Scrap`;
   document.getElementById('startScrapCount').textContent = `💰 ${meta.scrap} Scrap`;
   const list = document.getElementById('shopItemsList');
@@ -454,6 +493,37 @@ function renderShop(){
 }
 function openShop(){ renderShop(); document.getElementById('shopScreen').classList.add('active'); }
 function closeShop(){ document.getElementById('shopScreen').classList.remove('active'); }
+
+/* ---------------- DAILY CHALLENGE ---------------- */
+const DAILY_KEY = 'backrooms_daily_v1';
+const DAILY_LIST = [
+  {id:'kill12', desc:'🎯 التحدي اليومي: اقتل 12 وحش فجولة وحدة', target:12},
+  {id:'chest3', desc:'🎯 التحدي اليومي: افتح 3 صناديق فجولة وحدة', target:3},
+  {id:'scrap15', desc:'🎯 التحدي اليومي: اجمع 15 خردة فجولة وحدة', target:15},
+  {id:'shotgun5', desc:'🎯 التحدي اليومي: اقتل 5 وحوش بالشوزن فقط', target:5},
+  {id:'tame1', desc:'🎯 التحدي اليومي: روض حيوان أليف واحد', target:1}
+];
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); }
+function getDailyChallenge(){
+  const dayIdx = Math.floor(Date.now()/86400000) % DAILY_LIST.length;
+  const ch = DAILY_LIST[dayIdx];
+  try{
+    const raw = JSON.parse(localStorage.getItem(DAILY_KEY)||'null');
+    if(raw && raw.date===todayStr() && raw.id===ch.id && raw.done) dailyDone = true;
+  }catch(e){}
+  return ch;
+}
+function completeDailyIfDone(progressValue){
+  if(dailyDone) return;
+  if(progressValue >= dailyChallenge.target){
+    dailyDone = true;
+    meta.scrap += 50;
+    saveMeta();
+    try{ localStorage.setItem(DAILY_KEY, JSON.stringify({date:todayStr(), id:dailyChallenge.id, done:true})); }catch(e){}
+    showEventBanner('🏆 التحدي اليومي كمل! +50 خردة', 4000);
+    updateHUD();
+  }
+}
 
 /* ---------------- MAZE GENERATION ---------------- */
 function buildMaze(rx, rz){
@@ -864,14 +934,19 @@ const monsters = [];
     });
   }
 }
+const ORIGINAL_MONSTER_TOTAL = monsters.length;
 
 /* ---------------- CHEST MESHES + LOOT TABLE ---------------- */
 const LOOT_TABLE = [
-  {type:'medkit', weight:30},
-  {type:'battery', weight:20},
-  {type:'tome', weight:15},
-  {type:'sanity', weight:20},
-  {type:'trap', weight:15}
+  {type:'medkit', weight:22},
+  {type:'battery', weight:14},
+  {type:'tome', weight:12},
+  {type:'sanity', weight:16},
+  {type:'trap', weight:12},
+  {type:'speedBoots', weight:9},
+  {type:'cakeShield', weight:9},
+  {type:'xray', weight:9},
+  {type:'meat', weight:10}
 ];
 function rollLoot(){
   const total = LOOT_TABLE.reduce((s,l)=>s+l.weight,0);
@@ -889,6 +964,95 @@ for(const [gx,gz] of chestCells){
   mesh.position.set(wx, 0.3, wz);
   scene.add(mesh);
   chests.push({mesh, opened:false, x:wx, z:wz});
+}
+
+/* ---------------- NPC TRADER: "التاجر الضايع" — sells extras for scrap mid-run ---------------- */
+let trader = null;
+{
+  const traderCells = openCells.filter(([x,z]) =>
+    distMap[z][x] >= 5 &&
+    !(x===startGX && z===startGZ) &&
+    !(x===exitCell[0] && z===exitCell[1])
+  );
+  if(traderCells.length){
+    const [tgx,tgz] = traderCells[Math.floor(Math.random()*traderCells.length)];
+    const [twx,twz] = gridToWorld(tgx,tgz);
+    const mesh = createMonsterMesh(99.9);
+    mesh.traverse(o=>{
+      if(!o.material) return;
+      if(o.material.emissive){ o.material.emissive.setHex(0x123a4a); o.material.emissiveIntensity=0.5; }
+      if(o.geometry && o.geometry.type==='SphereGeometry'){ o.material.color.setHex(0x66ffcc); } // eyes -> friendly teal
+    });
+    mesh.position.set(twx, BODY_BASE_Y, twz);
+    scene.add(mesh);
+    trader = {mesh, x:twx, z:twz};
+  }
+}
+const TRADER_ITEMS = [
+  {key:'medkitBuy', name:'صندوق طبي', desc:'+30 HP فورًا', cost:8},
+  {key:'sanityBuy', name:'دواء الهدوء', desc:'+35 Sanity فورًا', cost:6},
+  {key:'meatBuy', name:'قطعة لحم', desc:'لتدجين وحش لاحقًا', cost:10},
+  {key:'tomeBuy', name:'كتاب مهارة', desc:'+5 ضرر دائم لهاد الجولة', cost:14}
+];
+function openTraderShop(){
+  const list = document.getElementById('shopItemsList');
+  list.innerHTML = '';
+  document.getElementById('shopScrapCount').textContent = `💰 ${meta.scrap} Scrap`;
+  document.querySelector('#shopScreen .shopTitle').textContent = '🧑\u200d💼 التاجر الضايع';
+  TRADER_ITEMS.forEach(item=>{
+    const row = document.createElement('div');
+    row.className = 'shopItem';
+    row.innerHTML = `
+      <div class="shopItemInfo">
+        <div class="shopItemName">${item.name}</div>
+        <div class="shopItemDesc">${item.desc}</div>
+      </div>
+      <button class="shopBuyBtn" ${meta.scrap<item.cost?'disabled':''}>شراء (${item.cost})</button>
+    `;
+    row.querySelector('button').addEventListener('click', ()=>{
+      if(meta.scrap<item.cost) return;
+      meta.scrap -= item.cost;
+      saveMeta();
+      if(item.key==='medkitBuy') applyLoot('medkit');
+      else if(item.key==='sanityBuy') applyLoot('sanity');
+      else if(item.key==='meatBuy') applyLoot('meat');
+      else if(item.key==='tomeBuy') applyLoot('tome');
+      openTraderShop();
+    });
+    list.appendChild(row);
+  });
+  document.getElementById('shopScreen').classList.add('active');
+}
+
+let traderHoldTimer = 0;
+const TRADER_HOLD_TIME = 1.4;
+const TRADER_RADIUS = 1.5;
+function updateTraderInteraction(dt){
+  if(!trader) return;
+  const prompt = document.getElementById('traderPrompt');
+  const fill = document.getElementById('traderProgressFill');
+  const d = Math.hypot(camera.position.x-trader.x, camera.position.z-trader.z);
+  if(d < TRADER_RADIUS){
+    prompt.classList.add('show');
+    const isStill = Math.hypot(velX,velZ) < 0.3;
+    if(isStill){
+      traderHoldTimer += dt;
+      fill.style.width = Math.min(100, (traderHoldTimer/TRADER_HOLD_TIME)*100)+'%';
+      if(traderHoldTimer >= TRADER_HOLD_TIME){
+        traderHoldTimer = 0;
+        fill.style.width = '0%';
+        openTraderShop();
+        showMsg('🧑\u200d💼 "أخي ضعت هنا من 2019... بغيتي تشري شي حاجة؟"');
+      }
+    } else {
+      traderHoldTimer = Math.max(0, traderHoldTimer - dt*2);
+      fill.style.width = Math.min(100, (traderHoldTimer/TRADER_HOLD_TIME)*100)+'%';
+    }
+  } else {
+    traderHoldTimer = 0;
+    prompt.classList.remove('show');
+    fill.style.width = '0%';
+  }
 }
 
 /* ---------------- EXIT PORTAL (locked until all monsters are dead) ---------------- */
@@ -1141,6 +1305,23 @@ document.getElementById('muteBtn').addEventListener('click', ()=>{
   if(ambientNodes) ambientNodes.gain.gain.value = audioOn ? 0.05 : 0;
 });
 
+document.getElementById('photoBtn').addEventListener('click', ()=>{
+  try{
+    renderer.render(scene, camera);
+    const dataUrl = renderer.domElement.toDataURL('image/jpeg', 0.85);
+    meta.photos = (meta.photos||0)+1;
+    saveMeta();
+    document.getElementById('photoImg').src = dataUrl;
+    document.getElementById('photoDownloadBtn').href = dataUrl;
+    document.getElementById('photoAlbumCount').textContent = `ألبوم Backrooms: ${meta.photos} صورة`;
+    document.getElementById('photoOverlay').classList.add('active');
+    if(meta.photos===10) showMsg('🏆 ألبوم Backrooms مكتمل! أنت مصور محترف للغرف الخلفية');
+  }catch(e){ showMsg('⚠ تعذر أخذ الصورة'); }
+});
+document.getElementById('photoCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('photoOverlay').classList.remove('active');
+});
+
 document.getElementById('exitBtn').addEventListener('click', ()=>{
   document.getElementById('hud').classList.remove('active');
   document.getElementById('startScreen').style.display='flex';
@@ -1168,6 +1349,7 @@ document.getElementById('shopBtnStart').addEventListener('click', openShop);
 document.getElementById('shopBtnOver').addEventListener('click', openShop);
 document.getElementById('shopBtnWin').addEventListener('click', openShop);
 renderShop();
+document.getElementById('dailyChallengeText').textContent = dailyChallenge.desc + (dailyDone ? ' ✅ (مكمل اليوم)' : '');
 
 /* ---------------- START ---------------- */
 document.getElementById('playBtn').addEventListener('click', ()=>{
@@ -1234,6 +1416,19 @@ let batteryBoostTimer = 0;
 let scrapEarnedThisRun = 0;
 const metaSpeedMult = 1 + meta.runner*0.10;
 
+/* ---------------- v3.0 FUN PACK state ---------------- */
+let speedBoostTimer = 0;      // حذاء الجري
+let cakeShields = 0;          // درع الكعكة — absorbs one hit each
+let xrayTimer = 0;            // المنظار — see monsters through walls
+let meatCount = 0;            // لحم لتدجين وحش
+let pet = null;               // الوحش الأليف المروض
+let photoCount = 0;           // عدد الصور فألبوم الفوتوغرافيا
+let dailyDone = false;
+let chestsOpenedCount = 0;
+let shotgunKillCount = 0;
+const SHOTGUN_IDX = WEAPONS.findIndex(w=>w.name==='شوزن');
+const dailyChallenge = getDailyChallenge();
+
 /* Sanity ("توتر وهدوء") state */
 const maxSanity = 100 + meta.sanityTraining*20;
 let sanity = maxSanity;
@@ -1249,7 +1444,7 @@ function updateHUD(){
   document.getElementById('hpLabel').textContent = Math.max(0,Math.round(playerHP))+' / '+maxHP+' HP';
   document.getElementById('sanityFill').style.width = Math.max(0,(sanity/maxSanity)*100)+'%';
   document.getElementById('sanityLabel').textContent = Math.max(0,Math.round(sanity))+' SANITY';
-  document.getElementById('killCounter').textContent = `القتلى: ${killCount} / ${monsters.length}`;
+  document.getElementById('killCounter').textContent = `القتلى: ${killCount} / ${ORIGINAL_MONSTER_TOTAL}`;
   document.getElementById('weaponName').textContent = WEAPONS[currentWeaponIdx].name;
   document.getElementById('scrapHud').textContent = `💰 ${meta.scrap}`;
 }
@@ -1282,6 +1477,11 @@ function killMonster(m){
   meta.scrap += scrapGain;
   scrapEarnedThisRun += scrapGain;
   saveMeta();
+
+  if(currentWeaponIdx===SHOTGUN_IDX) shotgunKillCount++;
+  if(dailyChallenge.id==='kill12') completeDailyIfDone(killCount);
+  if(dailyChallenge.id==='scrap15') completeDailyIfDone(scrapEarnedThisRun);
+  if(dailyChallenge.id==='shotgun5') completeDailyIfDone(shotgunKillCount);
 
   for(let i=0;i<WEAPONS.length;i++){
     if(killCount>=WEAPONS[i].unlockAt && unlockedWeapons.indexOf(i)===-1){
@@ -1347,8 +1547,66 @@ function hitMonster(m, dmg){
   if(tryMove(m.mesh.position.x, kz, m.radius)) m.mesh.position.z = kz;
 
   if(m.hp<=0){
-    killMonster(m);
+    if(meatCount>0 && !pet && !m.isHallucination){
+      meatCount--;
+      tameMonster(m);
+    } else {
+      killMonster(m);
+    }
   }
+}
+
+/* ---------------- MONSTER PET (tamed via المكافأة اللحمية) ---------------- */
+function tameMonster(m){
+  m.alive = true;
+  m.tamed = true;
+  m.hp = m.maxHp;
+  m.state = 'pet';
+  m.attackTimer = 0;
+  // recolor the body slightly friendlier (blue glow instead of red-eyed hostility)
+  const body = m.mesh.children[0];
+  if(body && body.material){ body.material.emissive.setHex(0x1c3a5a); body.material.emissiveIntensity = 0.6; }
+  pet = m;
+  showMsg('🐾 تم ترويض الوحش! غادي يتبعك ويهاجم الأعداء');
+  if(dailyChallenge.id==='tame1') completeDailyIfDone(1);
+}
+
+const PET_FOLLOW_DIST = 2.2;
+const PET_ATTACK_RADIUS = 1.4;
+const PET_ATTACK_DMG = 14;
+const PET_ATTACK_COOLDOWN = 1.0;
+function updatePet(m, dt, camPos){
+  const mp = m.mesh.position;
+  m.attackTimer = (m.attackTimer||0) - dt;
+
+  // find nearest hostile to warn/attack
+  let target=null, targetDist=Infinity;
+  for(const other of monsters){
+    if(other===m || !other.alive || other.tamed || other.isHallucination) continue;
+    const d = Math.hypot(other.mesh.position.x-mp.x, other.mesh.position.z-mp.z);
+    if(d<targetDist){ targetDist=d; target=other; }
+  }
+
+  let moveX=0, moveZ=0, speed=CHASE_SPEED*0.9;
+  if(target && targetDist < CHASE_RADIUS*0.8){
+    const tdx = target.mesh.position.x-mp.x, tdz = target.mesh.position.z-mp.z;
+    const tlen = Math.hypot(tdx,tdz)||1;
+    moveX = tdx/tlen; moveZ = tdz/tlen;
+    if(targetDist < PET_ATTACK_RADIUS && m.attackTimer<=0){
+      m.attackTimer = PET_ATTACK_COOLDOWN;
+      hitMonster(target, PET_ATTACK_DMG);
+    }
+  } else {
+    const pdx = camPos.x-mp.x, pdz = camPos.z-mp.z;
+    const pdist = Math.hypot(pdx,pdz);
+    if(pdist > PET_FOLLOW_DIST){ moveX = pdx/pdist; moveZ = pdz/pdist; speed = CHASE_SPEED*1.1; }
+  }
+
+  const stepX = moveX*speed*dt, stepZ = moveZ*speed*dt;
+  if(tryMove(mp.x+stepX, mp.z, m.radius)) mp.x += stepX;
+  if(tryMove(mp.x, mp.z+stepZ, m.radius)) mp.z += stepZ;
+  mp.y = BODY_BASE_Y + Math.sin(performance.now()*0.001*2.4 + m.mesh.userData.bobPhase)*0.07;
+  m.mesh.lookAt(camPos.x, mp.y, camPos.z);
 }
 
 /* ---------------- HALLUCINATIONS (spawned when sanity hits 0) ---------------- */
@@ -1420,6 +1678,9 @@ function openChest(c){
   activeChest = null; chestHoldTimer = 0;
   document.getElementById('chestPrompt').classList.remove('show');
 
+  chestsOpenedCount++;
+  if(dailyChallenge.id==='chest3') completeDailyIfDone(chestsOpenedCount);
+
   applyLoot(rollLoot());
 
   // risk: alert nearest 2 monsters toward the player
@@ -1449,6 +1710,22 @@ function applyLoot(type){
     showMsg('💥 فخ! -20 HP ووحش جديد فالطريق');
     damagePlayer(20);
     spawnMonsterNear(camera.position.x, camera.position.z);
+  } else if(type==='speedBoots'){
+    speedBoostTimer = 8;
+    showMsg('👟 حذاء الجري: كتجري بسرعة الصاروخ! (8 ثواني)');
+  } else if(type==='cakeShield'){
+    cakeShields = Math.min(2, cakeShields+1);
+    showMsg('🎂 درع الكعكة: الضربة الجاية غادي تولي كريمة بدل ضرر!');
+  } else if(type==='xray'){
+    xrayTimer = 10;
+    for(const m of monsters){
+      m.mesh.traverse(o=>{ if(o.material){ o.material.depthTest = false; } });
+      m.mesh.renderOrder = 999;
+    }
+    showMsg('👓 المنظار: كتشوف الوحوش من وراء الحيطان (10 ثواني)');
+  } else if(type==='meat'){
+    meatCount++;
+    showMsg(`🥩 لحم! (${meatCount}) — إلا خليتي وحش يهرب بصحة قليلة غادي يولي حيوانك الأليف`);
   }
   updateHUD();
 }
@@ -1479,6 +1756,7 @@ function spawnMonsterNear(px,pz){
 
 /* ---------------- RANDOM EVENTS (every 45s) ---------------- */
 let activeEvent = null;
+const fallingChairs = [];
 let powerOutageOriginalIntensities = null;
 let originalPlayerGlowIntensity = null;
 const fogOriginalDensity = scene.fog.density;
@@ -1494,10 +1772,42 @@ function showEventBanner(text, ms){
 
 function triggerRandomEvent(){
   if(gameEnded) return;
-  const options = ['blackout','ambush','fog'];
+  const options = ['blackout','ambush','fog','chairRain','cleanupAlarm','dancingMonster'];
   const type = options[Math.floor(Math.random()*options.length)];
 
-  if(type==='blackout'){
+  if(type==='chairRain'){
+    showEventBanner('🪑 مطر الكراسي الصفراء!', 3000);
+    const chairMat = new THREE.MeshStandardMaterial({color:0xffd23b, roughness:0.7});
+    for(let i=0;i<10;i++){
+      const chair = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5), chairMat);
+      const ang = Math.random()*Math.PI*2, r = Math.random()*4;
+      chair.position.set(camera.position.x+Math.cos(ang)*r, WALL_H+Math.random()*2, camera.position.z+Math.sin(ang)*r);
+      chair.userData.vy = -(2+Math.random()*2);
+      chair.userData.spin = (Math.random()-0.5)*8;
+      scene.add(chair);
+      fallingChairs.push(chair);
+    }
+    activeEvent = null;
+  } else if(type==='cleanupAlarm'){
+    showEventBanner('🚨 تنبيه: التنظيف جاري فالممر 3', 4000);
+    playGrowl();
+    const flash = document.getElementById('dmgFlash');
+    let blinks = 0;
+    const iv = setInterval(()=>{
+      flash.classList.toggle('show');
+      blinks++;
+      if(blinks>5){ clearInterval(iv); flash.classList.remove('show'); }
+    }, 220);
+    activeEvent = null;
+  } else if(type==='dancingMonster'){
+    const alive = monsters.filter(m=>m.alive && !m.isHallucination && !m.tamed);
+    if(alive.length){
+      const m = alive[Math.floor(Math.random()*alive.length)];
+      m.dancingUntil = performance.now()+10000;
+      showEventBanner('🕺 وحش قرر يرقص بدل ما يهاجم!', 3500);
+    }
+    activeEvent = null;
+  } else if(type==='blackout'){
     showEventBanner('⚡ انقطاع الكهرباء! غير الفلاشة خدامة...');
     activeEvent = {type, timeLeft:10};
     powerOutageOriginalIntensities = lights.map(L=>L.baseI);
@@ -1520,7 +1830,7 @@ setInterval(()=>{
 }, 45000);
 
 function checkWinUnlock(){
-  if(killCount>=monsters.length && !exitOpen){
+  if(killCount>=ORIGINAL_MONSTER_TOTAL && !exitOpen){
     exitOpen = true;
     if(barrierMesh){ scene.remove(barrierMesh); }
     if(window.__portalRing){
@@ -1554,7 +1864,7 @@ function fireWeapon(){
   let closest = null, closestT = Infinity;
 
   for(const m of monsters){
-    if(!m.alive) continue;
+    if(!m.alive || m.tamed) continue;
     const mp = m.mesh.position;
     const tx = mp.x-camPos.x, ty = mp.y-camPos.y, tz = mp.z-camPos.z;
     const t = tx*_camDir.x + ty*_camDir.y + tz*_camDir.z;
@@ -1564,11 +1874,37 @@ function fireWeapon(){
     if(dist < 0.9 && t < closestT){ closestT = t; closest = m; }
   }
 
-  if(closest) hitMonster(closest, w.dmg*dmgMult + bonusDamage);
+  if(closest){
+    hitMonster(closest, w.dmg*dmgMult + bonusDamage);
+    if(closest.alive && !closest.tamed && w.effect){
+      if(w.effect==='cry'){
+        closest.frozenUntil = performance.now()+2500;
+        showMsg('😭 الوحش بدا يبكي ويتجمد!');
+      } else if(w.effect==='gum'){
+        closest.frozenUntil = performance.now()+3000;
+        showMsg('🍬 العلكة لصقات الوحش فالحائط!');
+      } else if(w.effect==='chair'){
+        const camPos2 = camera.position;
+        const kdx = closest.mesh.position.x-camPos2.x, kdz = closest.mesh.position.z-camPos2.z;
+        const klen = Math.hypot(kdx,kdz)||1;
+        const kx = closest.mesh.position.x + (kdx/klen)*1.2;
+        const kz = closest.mesh.position.z + (kdz/klen)*1.2;
+        if(tryMove(kx, closest.mesh.position.z, closest.radius)) closest.mesh.position.x = kx;
+        if(tryMove(closest.mesh.position.x, kz, closest.radius)) closest.mesh.position.z = kz;
+        showMsg('🪑 كرسي صفراء طايرة!');
+      }
+    }
+  }
 }
 
 function damagePlayer(dmg){
   if(gameEnded) return;
+  if(cakeShields>0){
+    cakeShields--;
+    showMsg('🎂 درع الكعكة امتص الضربة! (كريمة فكل مكان)');
+    updateHUD();
+    return;
+  }
   playerHP = Math.max(0, playerHP-dmg);
   updateHUD();
   const flash = document.getElementById('dmgFlash');
@@ -1579,14 +1915,14 @@ function damagePlayer(dmg){
 
 function gameOver(){
   gameEnded = true;
-  document.getElementById('goStats').textContent = `القتلى: ${killCount} / ${monsters.length} — 💰 Scrap +${scrapEarnedThisRun}`;
+  document.getElementById('goStats').textContent = `القتلى: ${killCount} / ${ORIGINAL_MONSTER_TOTAL} — 💰 Scrap +${scrapEarnedThisRun}`;
   document.getElementById('gameOverScreen').classList.add('active');
   if(document.exitPointerLock) document.exitPointerLock();
 }
 
 function winGame(){
   gameEnded = true;
-  document.getElementById('winStats').textContent = `القتلى: ${killCount} / ${monsters.length} — 💰 Scrap +${scrapEarnedThisRun} — نجحت فالهروب من الغرف الخلفية!`;
+  document.getElementById('winStats').textContent = `القتلى: ${killCount} / ${ORIGINAL_MONSTER_TOTAL} — 💰 Scrap +${scrapEarnedThisRun} — نجحت فالهروب من الغرف الخلفية!`;
   document.getElementById('winScreen').classList.add('active');
   if(document.exitPointerLock) document.exitPointerLock();
 }
@@ -1619,7 +1955,7 @@ function animate(){
     let targetVX = 0, targetVZ = 0;
     if(len > 0.05){
       const nmx = mx/Math.max(len,1), nmz = mz/Math.max(len,1);
-      const speed = MOVE_SPEED * metaSpeedMult * (sprintOn||keys['ShiftLeft'] ? SPRINT_MULT : 1) * Math.min(1,len);
+      const speed = MOVE_SPEED * metaSpeedMult * (sprintOn||keys['ShiftLeft'] ? SPRINT_MULT : 1) * Math.min(1,len) * (speedBoostTimer>0 ? 2.1 : 1);
       const sinY = Math.sin(yaw), cosY = Math.cos(yaw);
       const fx = -sinY, fz = -cosY; // forward
       const rx = cosY, rz = -sinY; // right
@@ -1650,6 +1986,7 @@ function animate(){
 
     // v2.0: chests, sanity, hallucinations, ambient drips, random events
     updateChestInteraction(dt);
+    updateTraderInteraction(dt);
 
     // --- Sanity system: darkness drains it, light/kills restore it ---
     let minLightDist = Infinity;
@@ -1692,6 +2029,19 @@ function animate(){
       }
     }
 
+    // --- falling chairs from the chairRain event ---
+    for(let i=fallingChairs.length-1; i>=0; i--){
+      const ch = fallingChairs[i];
+      ch.userData.vy -= dt*4;
+      ch.position.y += ch.userData.vy*dt;
+      ch.rotation.x += ch.userData.spin*dt;
+      ch.rotation.z += ch.userData.spin*dt*0.7;
+      if(ch.position.y <= 0.25){
+        scene.remove(ch);
+        fallingChairs.splice(i,1);
+      }
+    }
+
     // --- chest bobbing animation ---
     for(const c of chests){
       if(c.opened) continue;
@@ -1705,6 +2055,26 @@ function animate(){
     for(const m of monsters){
       if(!m.alive) continue;
       const mp = m.mesh.position;
+
+      // frozen (crying / gummed) monsters stay put and can't attack
+      if(m.frozenUntil && performance.now() < m.frozenUntil){
+        mp.y = BODY_BASE_Y + Math.sin(performance.now()*0.001*2.4 + m.mesh.userData.bobPhase)*0.03;
+        continue;
+      }
+
+      // dancing monsters (funny event) just spin harmlessly
+      if(m.dancingUntil && performance.now() < m.dancingUntil){
+        m.mesh.rotation.y += dt*6;
+        mp.y = BODY_BASE_Y + Math.abs(Math.sin(performance.now()*0.006))*0.3;
+        continue;
+      }
+
+      // the tamed pet follows the player and fights nearby hostiles instead of the AI below
+      if(m.tamed){
+        updatePet(m, dt, camPos);
+        continue;
+      }
+
       const dx = camPos.x-mp.x, dz = camPos.z-mp.z;
       const dist = Math.hypot(dx,dz);
       const alerted = m.alertedUntil && performance.now() < m.alertedUntil;
@@ -1717,10 +2087,10 @@ function animate(){
         else if(m.state==='wander'){ m.wasSeen = false; }
       }
 
-      let moveX=0, moveZ=0, speed=MONSTER_SPEED;
+      let moveX=0, moveZ=0, speed=MONSTER_SPEED * (speedBoostTimer>0 ? 0.35 : 1);
       if(m.state==='chase'){
         anyChasing = true;
-        speed = CHASE_SPEED * (lowSanity ? 1.35 : 1);
+        speed = CHASE_SPEED * (lowSanity ? 1.35 : 1) * (speedBoostTimer>0 ? 0.35 : 1);
         if(dist>0.01){ moveX = dx/dist; moveZ = dz/dist; }
         m.attackTimer -= dt;
         if(dist < ATTACK_RADIUS && m.attackTimer<=0){
@@ -1754,7 +2124,7 @@ function animate(){
     let onTarget = false;
     camera.getWorldDirection(_camDir);
     for(const m of monsters){
-      if(!m.alive) continue;
+      if(!m.alive || m.tamed) continue;
       const mp = m.mesh.position;
       const tx = mp.x-camPos.x, ty = mp.y-camPos.y, tz = mp.z-camPos.z;
       const t = tx*_camDir.x + ty*_camDir.y + tz*_camDir.z;
@@ -1778,6 +2148,18 @@ function animate(){
     const val = Math.max(0.15, Math.min(1, flick));
     L.light.intensity = L.baseI * val;
     if(L.mesh) L.mesh.material.color.setRGB(1, 0.95*val+0.05, 0.6*val+0.1);
+  }
+
+  // v3.0 timers: speed boots / x-ray goggles decay every frame
+  speedBoostTimer = Math.max(0, speedBoostTimer - dt);
+  if(xrayTimer>0){
+    xrayTimer = Math.max(0, xrayTimer - dt);
+    if(xrayTimer<=0){
+      for(const m of monsters){
+        m.mesh.traverse(o=>{ if(o.material){ o.material.depthTest = true; } });
+        m.mesh.renderOrder = 0;
+      }
+    }
   }
 
   if(flashOn) batteryPct = Math.max(0, batteryPct - dt*0.15);
