@@ -80,19 +80,6 @@
   .hint b{color:var(--yellow);}
   .objective{font-size:13px; color:#ff9d5a; max-width:360px; line-height:1.7; font-weight:700;}
 
-  /* ---------- NAME ENTRY (first-visit onboarding) ---------- */
-  #nameScreen{
-    position:fixed; inset:0; z-index:90;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background:#050400; gap:16px; text-align:center; padding:24px;
-  }
-  #nameInput{
-    font-family:'Rubik',sans-serif; font-weight:700; font-size:18px; text-align:center;
-    color:var(--yellow); background:rgba(232,196,0,0.08); border:2px solid var(--yellow-dim);
-    border-radius:8px; padding:12px 18px; width:min(300px,80vw); outline:none;
-  }
-  #nameInput:focus{border-color:var(--yellow);}
-
   /* ---------- HUD / IN-GAME UI ---------- */
   #hud{position:fixed; inset:0; z-index:20; pointer-events:none; display:none;}
   #hud.active{display:block;}
@@ -323,22 +310,13 @@
 
 <canvas id="renderCanvas"></canvas>
 
-<!-- NAME ENTRY (first visit only) -->
-<div id="nameScreen">
-  <div class="glitchTitle" style="font-size:clamp(28px,8vw,54px);">BACKROOMS</div>
-  <div class="devTag">SOUHAIL ALAOUI — v4.0</div>
-  <div class="hint">شكون نتا؟ اكتب سميتك باش تبدا المغامرة ديالك فالغرف الخلفية...</div>
-  <input id="nameInput" type="text" maxlength="16" placeholder="سميتك هنا...">
-  <button id="nameSubmitBtn" class="restartBtn">دخول</button>
-</div>
-
 <!-- START SCREEN -->
 <div id="startScreen">
   <div class="brandStripe top"></div>
   <div class="logoWrap">
     <div class="glitchTitle">BACKROOMS<span>لا نهاية لهذا المكان</span></div>
   </div>
-  <div class="devTag" id="welcomeTag">SOUHAIL ALAOUI — v3.0 الفوضى</div>
+  <div class="devTag" id="welcomeTag">SOUHAIL ALAOUI — v4.0</div>
   <div class="scrapCount" id="startScrapCount">💰 0 Scrap</div>
   <button id="playBtn">ابدأ</button>
   <button class="restartBtn ghostBtn" id="shopBtnStart">🛒 المتجر</button>
@@ -352,6 +330,7 @@
     <br>🧠 كل ما بقيتي فالظلام كتنقص صحتك النفسية — دخل للضوء أو اقتل وحش باش ترجعها.
     <br>🐾 إلا عندك لحم وضربتي وحش ميت، غادي يتروض ويولي حيوانك الأليف.
     <br>🧑‍💼 كاين تاجر ضايع فالمتاهة، قرب منو باش تشري بالخردة.
+    <br>🕵️ راه كاين محقق غامض هادي وذكي جدًا هايم فالمتاهة — إلا لقيتيه ربما يعاونك.
     <br>📷 زر الكاميرا كيخليك تصور الغرف الخلفية وتصايب ألبوم.
     <br><b>على الكمبيوتر:</b> WASD للحركة + الماوس للدوران + كليك أو Space لإطلاق النار.
   </div>
@@ -384,6 +363,7 @@
   <div id="chestPrompt">📦 ابقَ ثابت لفتح الصندوق<div id="chestProgressBg"><div id="chestProgressFill"></div></div></div>
   <div id="traderPrompt">🧑‍💼 ابقَ ثابت للتحدث مع التاجر الضايع<div id="traderProgressBg"><div id="traderProgressFill"></div></div></div>
   <div id="chefPrompt">👨‍🍳 عندك لحم؟ ابقَ ثابت باش تعطيه للشيف<div id="chefProgressBg"><div id="chefProgressFill"></div></div></div>
+  <div id="detectivePrompt">🕵️ ابقَ ثابت للتحدث مع المحقق<div id="detectiveProgressBg"><div id="detectiveProgressFill"></div></div></div>
   <div class="weaponHUD"><div class="weaponName" id="weaponName">مسدس</div></div>
 
   <button id="muteBtn">🔊</button>
@@ -471,7 +451,7 @@ const MOVE_SMOOTH = 12;    // higher = snappier accel/decel (lighter feel)
 const LOOK_SMOOTH = 18;    // higher = tighter camera follow, lower = floatier
 
 /* combat / monster config */
-const MONSTER_COUNT = 10;
+const MONSTER_COUNT = 9;
 const MONSTER_SPEED = 1.6;
 const CHASE_SPEED = 3.5;
 const CHASE_RADIUS = 8.5;
@@ -504,10 +484,10 @@ function loadMeta(){
     const raw = localStorage.getItem(META_KEY);
     if(raw){
       const parsed = JSON.parse(raw);
-      return Object.assign({scrap:0, armor:0, runner:0, luck:0, sanityTraining:0, photos:0, playerName:'', cards:{}, legendaryUnlocked:false, furniture:0, title:''}, parsed);
+      return Object.assign({scrap:0, armor:0, runner:0, luck:0, sanityTraining:0, photos:0, cards:{}, legendaryUnlocked:false, furniture:0, title:''}, parsed);
     }
   }catch(e){}
-  return {scrap:0, armor:0, runner:0, luck:0, sanityTraining:0, photos:0, playerName:'', cards:{}, legendaryUnlocked:false, furniture:0, title:''};
+  return {scrap:0, armor:0, runner:0, luck:0, sanityTraining:0, photos:0, cards:{}, legendaryUnlocked:false, furniture:0, title:''};
 }
 let meta = loadMeta();
 function saveMeta(){
@@ -1202,6 +1182,127 @@ function updateChefInteraction(dt){
   }
 }
 
+/* ---------------- THE DETECTIVE: a hunched, quiet observer who rewards the player with clues/scrap ----------------
+   An original character inspired by the "brilliant reclusive detective" archetype: sits hunched over,
+   plain white long-sleeve top, messy dark hair, prefers sweets, speaks softly and analytically.
+   This is a bespoke NPC for this game — not a reproduction of any copyrighted artwork or dialogue. */
+let detective = null;
+{
+  const detectiveCells = openCells.filter(([x,z]) =>
+    distMap[z][x] >= 4 &&
+    !(x===startGX && z===startGZ) && !(x===exitCell[0] && z===exitCell[1]) &&
+    !(trader && x===Math.round(trader.x/CELL+GW/2) && z===Math.round(trader.z/CELL+GH/2)) &&
+    !(chef && x===Math.round(chef.x/CELL+GW/2) && z===Math.round(chef.z/CELL+GH/2))
+  );
+  if(detectiveCells.length){
+    const [dgx,dgz] = detectiveCells[Math.floor(Math.random()*detectiveCells.length)];
+    const [dwx,dwz] = gridToWorld(dgx,dgz);
+
+    const group = new THREE.Group();
+
+    // hunched torso — pale long-sleeve top
+    const torsoGeo = new THREE.CapsuleGeometry(0.32, 0.55, 4, 8);
+    const torsoMat = new THREE.MeshStandardMaterial({color:0xf2f2f2, roughness:0.85});
+    const torso = new THREE.Mesh(torsoGeo, torsoMat);
+    torso.position.set(0, 0.95, 0.05);
+    torso.rotation.x = 0.35; // hunched forward posture
+    group.add(torso);
+
+    // legs — loose dark trousers, slightly crouched stance
+    const legGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.75, 8);
+    const legMat = new THREE.MeshStandardMaterial({color:0x1c1c1c, roughness:0.9});
+    const legL = new THREE.Mesh(legGeo, legMat);
+    legL.position.set(-0.14, 0.4, -0.05);
+    const legR = legL.clone();
+    legR.position.x = 0.14;
+    group.add(legL, legR);
+
+    // head — pale, with messy dark hair (irregular icosahedron for a tousled silhouette)
+    const headGeo = new THREE.SphereGeometry(0.24, 12, 12);
+    const headMat = new THREE.MeshStandardMaterial({color:0xe9d9c8, roughness:0.7});
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.set(0, 1.55, 0.22);
+    group.add(head);
+
+    const hairGeo = new THREE.IcosahedronGeometry(0.27, 1);
+    const hairPos = hairGeo.attributes.position;
+    for(let i=0;i<hairPos.count;i++){
+      const vx=hairPos.getX(i), vy=hairPos.getY(i), vz=hairPos.getZ(i);
+      if(vy>0){
+        const spike = 1 + Math.random()*0.35;
+        hairPos.setXYZ(i, vx*spike, vy*spike, vz*spike);
+      }
+    }
+    hairGeo.computeVertexNormals();
+    const hairMat = new THREE.MeshStandardMaterial({color:0x0c0c0c, roughness:0.95});
+    const hair = new THREE.Mesh(hairGeo, hairMat);
+    hair.position.set(0, 1.60, 0.20);
+    hair.scale.set(1, 0.95, 1);
+    group.add(hair);
+
+    // large, tired dark eyes — a small detail nod to sleepless nights of deduction
+    const eyeGeo = new THREE.SphereGeometry(0.035, 8, 8);
+    const eyeMat = new THREE.MeshBasicMaterial({color:0x111111, toneMapped:false});
+    const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+    eyeL.position.set(-0.08, 1.56, 0.44);
+    const eyeR = eyeL.clone();
+    eyeR.position.x = 0.08;
+    group.add(eyeL, eyeR);
+
+    // small floating sweet (a piece of candy) — a signature quirky prop
+    const candyGeo = new THREE.SphereGeometry(0.05, 8, 8);
+    const candyMat = new THREE.MeshStandardMaterial({color:0xffb3d9, emissive:0x552244, emissiveIntensity:0.4});
+    const candy = new THREE.Mesh(candyGeo, candyMat);
+    candy.position.set(0.3, 0.85, 0.35);
+    group.add(candy);
+    group.userData.candy = candy;
+
+    group.userData.bobPhase = Math.random()*10;
+    group.position.set(dwx, 0, dwz);
+    scene.add(group);
+    detective = {mesh:group, x:dwx, z:dwz, greeted:false};
+  }
+}
+let detectiveHoldTimer = 0;
+const DETECTIVE_HOLD_TIME = 1.6;
+const DETECTIVE_RADIUS = 1.5;
+const DETECTIVE_LINES = [
+  '🕵️ "احتمال بقائك حي فهاد المكان هو 34%... تقريبًا."',
+  '🕵️ "كل صندوق كيخبي احتمال. أنا فقط كنحسب الاحتمالات."',
+  '🕵️ "الوحوش غادي تحس بيك إلا بقيتي واقف فمكانك بزاف."',
+  '🕵️ "خذ هاد الخردة. تحليلي قال بلي تستاهلها."'
+];
+function updateDetectiveInteraction(dt){
+  if(!detective) return;
+  const prompt = document.getElementById('detectivePrompt');
+  const fill = document.getElementById('detectiveProgressFill');
+  const d = Math.hypot(camera.position.x-detective.x, camera.position.z-detective.z);
+  if(d < DETECTIVE_RADIUS){
+    if(!detective.greeted){ detective.greeted = true; showMsg('🕵️ "أوه... زائر. جلست هنا بش نحلل نمط هاد المتاهة."'); }
+    prompt.classList.add('show');
+    const isStill = Math.hypot(velX,velZ) < 0.3;
+    if(isStill){
+      detectiveHoldTimer += dt;
+      fill.style.width = Math.min(100, (detectiveHoldTimer/DETECTIVE_HOLD_TIME)*100)+'%';
+      if(detectiveHoldTimer >= DETECTIVE_HOLD_TIME){
+        detectiveHoldTimer = 0; fill.style.width='0%';
+        const gain = 4+Math.floor(Math.random()*5);
+        meta.scrap += gain;
+        saveMeta();
+        showMsg(DETECTIVE_LINES[Math.floor(Math.random()*DETECTIVE_LINES.length)] + ` (+${gain} خردة)`);
+        updateHUD();
+      }
+    } else {
+      detectiveHoldTimer = Math.max(0, detectiveHoldTimer - dt*2);
+      fill.style.width = Math.min(100, (detectiveHoldTimer/DETECTIVE_HOLD_TIME)*100)+'%';
+    }
+  } else {
+    detectiveHoldTimer = 0;
+    prompt.classList.remove('show');
+    fill.style.width = '0%';
+  }
+}
+
 /* ---------------- SUPERMARKET CARTS: walk over one to start a timed ride ---------------- */
 const cartPickups = [];             // شوبينغ كارط pickups scattered in the maze
 const cartGeo = new THREE.BoxGeometry(0.6,0.6,0.9);
@@ -1578,26 +1679,7 @@ document.getElementById('shopBtnWin').addEventListener('click', openShop);
 document.getElementById('homeBtnStart').addEventListener('click', openHome);
 document.getElementById('homeCloseBtn').addEventListener('click', closeHome);
 renderShop();
-
-/* ---------------- NAME ENTRY (first-visit onboarding) ---------------- */
-function applyWelcomeName(){
-  const tag = document.getElementById('welcomeTag');
-  if(meta.playerName){ tag.textContent = `أهلا ${meta.playerName} — SOUHAIL ALAOUI v4.0`; }
-  else { tag.textContent = 'SOUHAIL ALAOUI — v4.0'; }
-}
-if(meta.playerName){
-  document.getElementById('nameScreen').style.display = 'none';
-}
-applyWelcomeName();
-function submitName(){
-  const val = document.getElementById('nameInput').value.trim();
-  meta.playerName = val || 'مسافر الغرف الخلفية';
-  saveMeta();
-  applyWelcomeName();
-  document.getElementById('nameScreen').style.display = 'none';
-}
-document.getElementById('nameSubmitBtn').addEventListener('click', submitName);
-document.getElementById('nameInput').addEventListener('keydown', e=>{ if(e.key==='Enter') submitName(); });
+document.getElementById('welcomeTag').textContent = 'SOUHAIL ALAOUI — v4.0';
 
 /* ---------------- START ---------------- */
 document.getElementById('playBtn').addEventListener('click', ()=>{
@@ -2387,102 +2469,4 @@ function animate(){
       if(tryMove(camera.position.x, pz+dzw)) camera.position.z += dzw; else velZ = 0;
     }
 
-    // weapon cooldown / recoil ease
-    fireTimer = Math.max(0, fireTimer-dt);
-    muzzleFlash.intensity *= 0.8;
-    recoil += (0-recoil) * (1-Math.exp(-10*dt));
-    gunGroup.position.z = -recoil;
-    recoilPitch += (0-recoilPitch) * (1-Math.exp(-6*dt));
-    camera.rotation.x += recoilPitch;
-
-    // v2.0: chests, sanity, hallucinations, ambient drips, random events
-    updateChestInteraction(dt);
-    updateTraderInteraction(dt);
-    updateChefInteraction(dt);
-    updateCartPickups(dt);
-    updateCartBumps();
-
-    // --- Sanity system: darkness drains it, light/kills restore it ---
-    let minLightDist = Infinity;
-    for(const L of lights){ const d = camera.position.distanceTo(L.light.position); if(d<minLightDist) minLightDist = d; }
-    const inDark = !flashOn && minLightDist > 5;
-    if(inDark){ sanity = Math.max(0, sanity - 0.05*dt); }
-    if(!inDark && wasInDark){ sanity = Math.min(maxSanity, sanity+15); }
-    wasInDark = inDark;
-
-    const lowSanity = sanity < 30;
-    canvas.classList.toggle('lowSanity', lowSanity);
-    canvas.classList.toggle('earthquake', !!(activeEvent && activeEvent.type==='earthquake'));
-    if(lowSanity && Math.random() < 0.004) playWhisper();
-
-    if(sanity <= 0 && !hallucinationActive){
-      hallucinationActive = true;
-      spawnHallucination();
-      sanity = 15; // brief relief so it doesn't spam every frame
-    }
-
-    // --- ambient water drips near walls, for tension ---
-    dripTimer -= dt;
-    if(dripTimer <= 0){
-      if(nearWall(camera.position.x, camera.position.z)) playDrip();
-      dripTimer = 4 + Math.random()*5;
-    }
-
-    // --- random event countdown revert ---
-    if(activeEvent){
-      activeEvent.timeLeft -= dt;
-      if(activeEvent.timeLeft <= 0){
-        if(activeEvent.type==='blackout' && powerOutageOriginalIntensities){
-          lights.forEach((L,i)=>{ L.baseI = powerOutageOriginalIntensities[i]; });
-          powerOutageOriginalIntensities = null;
-          if(originalPlayerGlowIntensity!==null){ playerGlow.intensity = originalPlayerGlowIntensity; originalPlayerGlowIntensity = null; }
-        } else if(activeEvent.type==='fog'){
-          scene.fog.density = fogOriginalDensity;
-          scene.fog.color.copy(fogOriginalColor);
-        }
-        activeEvent = null;
-      }
-    }
-
-    // --- falling chairs from the chairRain event ---
-    for(let i=fallingChairs.length-1; i>=0; i--){
-      const ch = fallingChairs[i];
-      ch.userData.vy -= dt*4;
-      ch.position.y += ch.userData.vy*dt;
-      ch.rotation.x += ch.userData.spin*dt;
-      ch.rotation.z += ch.userData.spin*dt*0.7;
-      if(ch.position.y <= 0.25){
-        scene.remove(ch);
-        fallingChairs.splice(i,1);
-      }
-    }
-
-    // --- chest bobbing animation ---
-    for(const c of chests){
-      if(c.opened) continue;
-      c.mesh.rotation.y += dt*0.6;
-      c.mesh.position.y = 0.3 + Math.sin(performance.now()*0.002 + c.x)*0.05;
-    }
-
-    // monster AI + combat
-    const camPos = camera.position;
-    let anyChasing = false;
-    for(const m of monsters){
-      if(!m.alive) continue;
-      const mp = m.mesh.position;
-
-      // frying-pan launch: monster flies up in an arc, ignores everything else meanwhile
-      if(m.launchedUntil){
-        const remain = m.launchedUntil - performance.now();
-        if(remain > 0){
-          const elapsed = 0.9 - remain/1000;
-          m.launchVy -= dt*18; // gravity
-          mp.y = Math.max(BODY_BASE_Y, mp.y + m.launchVy*dt);
-          m.mesh.rotation.x += dt*10;
-          m.mesh.rotation.z += dt*6;
-          continue;
-        } else {
-          m.launchedUntil = null;
-          mp.y = BODY_BASE_Y;
-          m.mesh.rotation.x = 0; m.mesh.rotation.z = 0;
-          if(dailyChallenge){ /* no-op
+    // weapon cooldow
