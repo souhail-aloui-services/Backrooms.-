@@ -1200,13 +1200,19 @@ let detective = null;
 
     const group = new THREE.Group();
 
-    // hunched torso — pale long-sleeve top
-    const torsoGeo = new THREE.CapsuleGeometry(0.32, 0.55, 4, 8);
+    // hunched torso — pale long-sleeve top (CylinderGeometry + Sphere caps; CapsuleGeometry needs r142+, this game uses r128)
     const torsoMat = new THREE.MeshStandardMaterial({color:0xf2f2f2, roughness:0.85});
+    const torsoGeo = new THREE.CylinderGeometry(0.30, 0.32, 0.55, 10);
     const torso = new THREE.Mesh(torsoGeo, torsoMat);
     torso.position.set(0, 0.95, 0.05);
     torso.rotation.x = 0.35; // hunched forward posture
     group.add(torso);
+    const torsoCapTop = new THREE.Mesh(new THREE.SphereGeometry(0.30, 10, 10), torsoMat);
+    torsoCapTop.position.set(0, 0.95 + Math.cos(0.35)*0.275, 0.05 + Math.sin(0.35)*0.275);
+    group.add(torsoCapTop);
+    const torsoCapBottom = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 10), torsoMat);
+    torsoCapBottom.position.set(0, 0.95 - Math.cos(0.35)*0.275, 0.05 - Math.sin(0.35)*0.275);
+    group.add(torsoCapBottom);
 
     // legs — loose dark trousers, slightly crouched stance
     const legGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.75, 8);
@@ -2457,16 +2463,4 @@ function animate(){
       if(flashOn){ batteryPct = Math.max(0, batteryPct - dt*0.35); }
     }
 
-    // ease velocity toward target — light acceleration/deceleration instead of instant stop-start
-    const moveLerp = 1 - Math.exp(-MOVE_SMOOTH * dt);
-    velX += (targetVX - velX) * moveLerp;
-    velZ += (targetVZ - velZ) * moveLerp;
-
-    if(Math.hypot(velX,velZ) > 0.001){
-      const dxw = velX * dt, dzw = velZ * dt;
-      const px = camera.position.x, pz = camera.position.z;
-      if(tryMove(px+dxw, pz)) camera.position.x += dxw; else velX = 0;
-      if(tryMove(camera.position.x, pz+dzw)) camera.position.z += dzw; else velZ = 0;
-    }
-
-    // weapon cooldow
+    // ease velocity toward target — light accelerati
