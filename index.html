@@ -109,6 +109,7 @@
     transition:border-color .1s, box-shadow .1s;
   }
   .crosshair.hot{border-color:#ff3b2a; box-shadow:0 0 14px rgba(255,59,42,0.85); opacity:1;}
+  .crosshair.talk{border-color:#39c0ff; box-shadow:0 0 14px rgba(57,192,255,0.85); opacity:1;}
 
   .msgLine{
     position:absolute; bottom:calc(150px + env(safe-area-inset-bottom)); left:0; right:0;
@@ -182,6 +183,16 @@
     font-size:19px; display:flex; align-items:center; justify-content:center;
   }
 
+  #talkBtn{
+    position:absolute; pointer-events:auto; left:24px; bottom:calc(212px + env(safe-area-inset-bottom));
+    width:64px; height:64px; border-radius:50%;
+    background:rgba(57,192,255,0.14); border:2px solid rgba(57,192,255,0.7);
+    display:none; align-items:center; justify-content:center; font-size:24px; color:#39c0ff;
+    box-shadow:0 0 18px rgba(57,192,255,0.3);
+  }
+  #talkBtn.show{display:flex;}
+  #talkBtn:active{background:rgba(57,192,255,0.4);}
+
   #muteBtn{position:absolute; top:calc(10px + env(safe-area-inset-top)); left:16px; pointer-events:auto;
     width:38px; height:38px; border-radius:6px; background:rgba(0,0,0,0.55); border:1.5px solid var(--yellow-dim);
     color:var(--yellow); font-size:16px; display:flex; align-items:center; justify-content:center;}
@@ -194,6 +205,18 @@
     background:radial-gradient(circle, rgba(255,0,0,0) 40%, rgba(255,0,0,0.38) 100%);
     transition:opacity .16s;}
   #dmgFlash.show{opacity:1;}
+
+  /* ---------- DETECTIVE DIALOGUE BOX ---------- */
+  #dialogueBox{
+    position:absolute; left:50%; bottom:calc(150px + env(safe-area-inset-bottom));
+    transform:translateX(-50%); width:min(88vw, 420px);
+    background:rgba(6,10,14,0.88); border:1.5px solid #39c0ff; border-radius:10px;
+    padding:12px 16px; box-shadow:0 0 24px rgba(57,192,255,0.25);
+    opacity:0; pointer-events:none; transition:opacity .3s;
+  }
+  #dialogueBox.show{opacity:1;}
+  #dialogueName{font-family:'Archivo Black',sans-serif; font-size:13px; color:#39c0ff; letter-spacing:1px; margin-bottom:5px;}
+  #dialogueText{font-size:13px; color:#dbeeff; line-height:1.6; font-weight:500;}
 
   /* end screens */
   #gameOverScreen,#winScreen{
@@ -210,7 +233,7 @@
   }
 
   @media (min-width:820px){
-    #joyZone,#flashlightBtn,#sprintBtn{transform:scale(1.15);}
+    #joyZone,#flashlightBtn,#sprintBtn,#talkBtn{transform:scale(1.15);}
   }
 </style>
 </head>
@@ -226,10 +249,10 @@
   </div>
   <div class="devTag">SOUHAIL ALAOUI</div>
   <button id="playBtn">ابدأ</button>
-  <div class="objective">🎯 المهمة: اقتل كل الوحوش الغريبة، بعدها ابحث عن البوابة الأرجوانية للنجاة.</div>
+  <div class="objective">🎯 المهمة: اقتل كل الوحوش الغريبة، بعدها ابحث عن البوابة الأرجوانية للنجاة. المحقق يقدر يعاونك بمعلومات.</div>
   <div class="hint">
-    حرك جهاز اللمس فالجانب الأيسر باش تمشي، ولمس فأي بلاصة أخرى باش تدور الكاميرا. الزر الأحمر لإطلاق النار، وزر 🔄 لتبديل السلاح.
-    <br><b>على الكمبيوتر:</b> WASD للحركة + الماوس للدوران + كليك أو Space لإطلاق النار.
+    حرك جهاز اللمس فالجانب الأيسر باش تمشي، ولمس فأي بلاصة أخرى باش تدور الكاميرا. الزر الأحمر لإطلاق النار، وزر 🔄 لتبديل السلاح، وزر 💬 للتكلم مع المحقق.
+    <br><b>على الكمبيوتر:</b> WASD للحركة + الماوس للدوران + كليك أو Space لإطلاق النار، وزر E للتكلم.
   </div>
   <div class="brandStripe bottom"></div>
 </div>
@@ -253,6 +276,11 @@
   <div class="msgLine" id="msgLine"></div>
   <div class="weaponHUD"><div class="weaponName" id="weaponName">مسدس</div></div>
 
+  <div id="dialogueBox">
+    <div id="dialogueName">المحقق</div>
+    <div id="dialogueText"></div>
+  </div>
+
   <button id="muteBtn">🔊</button>
   <button id="exitBtn">✕</button>
 
@@ -265,6 +293,7 @@
   <button class="actionBtn" id="sprintBtn">⚡</button>
   <button id="fireBtn">🔫</button>
   <button id="weaponBtn">🔄</button>
+  <button id="talkBtn">💬</button>
 
   <div id="dmgFlash"></div>
 </div>
@@ -291,7 +320,8 @@
 /* ============================================================
    SOUHAIL ALAOUI — BACKROOMS: SURVIVAL
    Procedural maze, weird procedural monsters, gun + crosshair
-   shooting, weapon/skill progression, locked exit portal.
+   shooting, weapon/skill progression, locked exit portal,
+   + an original detective NPC who gives hints (talk to him).
    Perf-tuned: fewer real-time lights, capped pixel ratio,
    cheap ray-vs-point hit tests instead of full mesh raycasts.
    ============================================================ */
@@ -317,6 +347,9 @@ const ATTACK_RADIUS = 1.5;
 const ATTACK_COOLDOWN = 1.1;
 const ATTACK_DAMAGE = 9;
 const BODY_BASE_Y = 1.25;
+
+/* detective NPC config */
+const TALK_RADIUS = 2.4;
 
 const WEAPONS = [
   {name:'مسدس', dmg:24, cooldown:0.36, unlockAt:0},
@@ -431,6 +464,11 @@ let spawnCandidates = openCells.filter(([x,z]) => distMap[z][x] >= 4 && !(x===ex
 if(spawnCandidates.length < MONSTER_COUNT){
   spawnCandidates = openCells.filter(([x,z]) => !(x===startGX && z===startGZ) && !(x===exitCell[0] && z===exitCell[1]));
 }
+
+/* pick a spot for the detective: fairly close to the player start, but not right on top of them */
+let detCell = openCells.find(([x,z]) => distMap[z][x] >= 2 && distMap[z][x] <= 5 && !(x===exitCell[0] && z===exitCell[1]));
+if(!detCell) detCell = [startGX, startGZ];
+const [detWX, detWZ] = gridToWorld(detCell[0], detCell[1]);
 
 /* ---------------- CANVAS TEXTURES ---------------- */
 function makeWallTexture(){
@@ -725,6 +763,135 @@ const monsters = [];
   }
 }
 
+/* ---------------- DETECTIVE NPC (original character — white tee, blue pants) ---------------- */
+function createDetectiveNPC(){
+  const group = new THREE.Group();
+
+  const skinMat = new THREE.MeshStandardMaterial({color:0xe0c4a0, roughness:0.75});
+  const hairMat = new THREE.MeshStandardMaterial({color:0x14100e, roughness:0.7});
+  const shirtMat = new THREE.MeshStandardMaterial({color:0xf5f2e9, roughness:0.85});
+  const pantsMat = new THREE.MeshStandardMaterial({color:0x24478f, roughness:0.8});
+  const shoeMat = new THREE.MeshStandardMaterial({color:0x1a1a1a, roughness:0.6});
+
+  // torso — plain white t-shirt
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.52,0.62,0.30), shirtMat);
+  torso.position.y = 1.02;
+  group.add(torso);
+
+  // hunched-forward posture (curved back, head dropped) — original slouched silhouette
+  torso.rotation.x = 0.18;
+
+  // legs — blue pants, slightly bent as if crouching on a chair
+  const legGeo = new THREE.BoxGeometry(0.20,0.62,0.22);
+  const legL = new THREE.Mesh(legGeo, pantsMat);
+  legL.position.set(-0.14, 0.42, 0.05);
+  legL.rotation.x = -0.9;
+  const legR = new THREE.Mesh(legGeo, pantsMat);
+  legR.position.set(0.14, 0.42, 0.05);
+  legR.rotation.x = -0.9;
+  group.add(legL, legR);
+
+  // shins/feet resting forward (barefoot-crouch silhouette, no branded shoes)
+  const shinGeo = new THREE.BoxGeometry(0.19,0.42,0.20);
+  const shinL = new THREE.Mesh(shinGeo, pantsMat);
+  shinL.position.set(-0.14, 0.72, 0.32);
+  shinL.rotation.x = 0.75;
+  const shinR = new THREE.Mesh(shinGeo, pantsMat);
+  shinR.position.set(0.14, 0.72, 0.32);
+  shinR.rotation.x = 0.75;
+  group.add(shinL, shinR);
+
+  const footGeo = new THREE.BoxGeometry(0.20,0.09,0.30);
+  const footL = new THREE.Mesh(footGeo, skinMat);
+  footL.position.set(-0.14, 0.93, 0.40);
+  const footR = new THREE.Mesh(footGeo, skinMat);
+  footR.position.set(0.14, 0.93, 0.40);
+  group.add(footL, footR);
+
+  // arms resting on knees
+  const armGeo = new THREE.BoxGeometry(0.12,0.46,0.12);
+  const armL = new THREE.Mesh(armGeo, shirtMat);
+  armL.position.set(-0.30, 0.98, 0.14);
+  armL.rotation.x = -0.5;
+  armL.rotation.z = 0.12;
+  const armR = new THREE.Mesh(armGeo, shirtMat);
+  armR.position.set(0.30, 0.98, 0.14);
+  armR.rotation.x = -0.5;
+  armR.rotation.z = -0.12;
+  group.add(armL, armR);
+
+  const handGeo = new THREE.SphereGeometry(0.075, 8, 8);
+  const handL = new THREE.Mesh(handGeo, skinMat);
+  handL.position.set(-0.34, 0.78, 0.36);
+  const handR = new THREE.Mesh(handGeo, skinMat);
+  handR.position.set(0.34, 0.78, 0.36);
+  group.add(handL, handR);
+
+  // head — pale, tired, messy dark hair, dark circles under the eyes
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 14), skinMat);
+  head.position.set(0, 1.42, 0.10);
+  group.add(head);
+
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.205, 12, 12, 0, Math.PI*2, 0, Math.PI*0.62), hairMat);
+  hair.position.set(0, 1.47, 0.08);
+  hair.rotation.x = -0.05;
+  group.add(hair);
+
+  // messy hair spikes for a scruffy, unkempt look
+  const spikeGeo = new THREE.ConeGeometry(0.03, 0.11, 5);
+  for(let i=0;i<9;i++){
+    const spike = new THREE.Mesh(spikeGeo, hairMat);
+    const ang = (i/9)*Math.PI*2;
+    spike.position.set(Math.cos(ang)*0.13, 1.58, 0.08+Math.sin(ang)*0.13);
+    spike.rotation.z = Math.cos(ang)*0.5;
+    spike.rotation.x = Math.sin(ang)*0.5 - 0.3;
+    group.add(spike);
+  }
+
+  // dark circles under the eyes — sleepless look
+  const circleMat = new THREE.MeshStandardMaterial({color:0x2a2018, roughness:0.9, transparent:true, opacity:0.55});
+  const circleGeo = new THREE.CircleGeometry(0.045, 10);
+  const circleL = new THREE.Mesh(circleGeo, circleMat);
+  circleL.position.set(-0.07, 1.395, 0.275);
+  const circleR = new THREE.Mesh(circleGeo, circleMat);
+  circleR.position.set(0.07, 1.395, 0.275);
+  group.add(circleL, circleR);
+
+  // eyes
+  const eyeGeo = new THREE.SphereGeometry(0.028, 8, 8);
+  const eyeMat = new THREE.MeshBasicMaterial({color:0x1a1a1a, toneMapped:false});
+  const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+  eyeL.position.set(-0.07, 1.43, 0.285);
+  const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+  eyeR.position.set(0.07, 1.43, 0.285);
+  group.add(eyeL, eyeR);
+
+  // subtle interaction glow ring at his feet
+  const ringMat = new THREE.MeshBasicMaterial({color:0x39c0ff, transparent:true, opacity:0.35, side:THREE.DoubleSide});
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.62, 24), ringMat);
+  ring.rotation.x = -Math.PI/2;
+  ring.position.y = 0.02;
+  group.add(ring);
+
+  group.userData.head = head;
+  group.userData.ring = ring;
+  group.userData.bobPhase = Math.random()*10;
+  return group;
+}
+
+const HINT_LINES = [
+  'المخرج بعيد على القدر اللي حسيتي بيه... تبع الحس ديالك، وخلي الوحوش الحية بعيدة عليك.',
+  'كاين شي وحوش كيبانو هادئين من بعيد، ولكن ملي تقرب كيبدا الفم يهرب. راه ماشي كلشي بحال ما بان.',
+  'الباب الأرجواني ما غاديش يفتح حتى تقتل جميع الوحوش. عدهم زوين وما تخليش حتى وحد.',
+  'إيلا حسيتي بلا بطارية فالمصباح، ما تخليهاش تنطفي فوسط الممر... الظلمة هنا ما كتصبرش عليك.',
+  'خدام على راسك، الوحوش كيتبعو الصوت والحركة السريعة أكثر من الضوء.'
+];
+let hintIdx = 0;
+
+const detective = createDetectiveNPC();
+detective.position.set(detWX, 0, detWZ);
+scene.add(detective);
+
 /* ---------------- EXIT PORTAL (locked until all monsters are dead) ---------------- */
 let barrierMesh = null;
 {
@@ -810,10 +977,28 @@ function playGrowl(){
     o.stop(audioCtx.currentTime+0.33);
   }catch(e){}
 }
+function playChime(){
+  if(!audioCtx || !audioOn) return;
+  try{
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type='sine'; o.frequency.value = 520;
+    g.gain.value = 0.05;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    o.frequency.exponentialRampToValueAtTime(720, audioCtx.currentTime+0.15);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.22);
+    o.stop(audioCtx.currentTime+0.23);
+  }catch(e){}
+}
 
 /* ---------------- INPUT: KEYBOARD (desktop) ---------------- */
 const keys = {};
-window.addEventListener('keydown', e=>{ keys[e.code]=true; if(e.code==='Space') fireWeapon(); });
+window.addEventListener('keydown', e=>{
+  keys[e.code]=true;
+  if(e.code==='Space') fireWeapon();
+  if(e.code==='KeyE') talkToDetective();
+});
 window.addEventListener('keyup', e=>keys[e.code]=false);
 
 let pointerLocked=false;
@@ -953,6 +1138,10 @@ document.getElementById('weaponBtn').addEventListener('click', ()=>{
   showMsg(`تم اختيار: ${WEAPONS[currentWeaponIdx].name}`);
 });
 
+const talkBtn = document.getElementById('talkBtn');
+talkBtn.addEventListener('touchstart', e=>{e.stopPropagation(); talkToDetective();}, {passive:true});
+talkBtn.addEventListener('mousedown', e=>{e.stopPropagation(); talkToDetective();});
+
 document.getElementById('restartBtn1').addEventListener('click', ()=>location.reload());
 document.getElementById('restartBtn2').addEventListener('click', ()=>location.reload());
 
@@ -962,7 +1151,7 @@ document.getElementById('playBtn').addEventListener('click', ()=>{
   document.getElementById('hud').classList.add('active');
   startAmbient();
   updateHUD();
-  showMsg('لا نهاية لهذا المكان... اقتل كل الوحوش!');
+  showMsg('لا نهاية لهذا المكان... اقتل كل الوحوش! كاين محقق يقدر يعاونك بمعلومات.');
 });
 
 let msgTimer=null;
@@ -972,6 +1161,25 @@ function showMsg(text){
   el.classList.add('show');
   clearTimeout(msgTimer);
   msgTimer = setTimeout(()=>el.classList.remove('show'), 3200);
+}
+
+let dialogueTimer=null;
+function showDialogue(text){
+  const box = document.getElementById('dialogueBox');
+  document.getElementById('dialogueText').textContent = text;
+  box.classList.add('show');
+  clearTimeout(dialogueTimer);
+  dialogueTimer = setTimeout(()=>box.classList.remove('show'), 4600);
+}
+
+function talkToDetective(){
+  if(gameEnded) return;
+  const dx = camera.position.x-detWX, dz = camera.position.z-detWZ;
+  if(Math.hypot(dx,dz) > TALK_RADIUS) return;
+  playChime();
+  const line = HINT_LINES[hintIdx % HINT_LINES.length];
+  hintIdx++;
+  showDialogue(line);
 }
 
 /* ---------------- MOVEMENT / COLLISION ---------------- */
@@ -1246,7 +1454,24 @@ function animate(){
       _closePt.set(camPos.x+_camDir.x*t, camPos.y+_camDir.y*t, camPos.z+_camDir.z*t);
       if(_closePt.distanceTo(mp) < 0.9){ onTarget = true; break; }
     }
-    document.getElementById('crosshair').classList.toggle('hot', onTarget);
+
+    // detective proximity: idle bob + subtle head tilt toward player, show talk button when close
+    {
+      const bt = performance.now()*0.001;
+      detective.position.y = Math.sin(bt*1.6 + detective.userData.bobPhase)*0.015;
+      if(detective.userData.ring) detective.userData.ring.rotation.z = bt*0.4;
+
+      const ddx = camPos.x-detWX, ddz = camPos.z-detWZ;
+      const ddist = Math.hypot(ddx,ddz);
+      detective.lookAt(camPos.x, detective.position.y+1.1, camPos.z);
+
+      const nearDetective = ddist < TALK_RADIUS;
+      talkBtn.classList.toggle('show', nearDetective);
+      document.getElementById('crosshair').classList.toggle('talk', !onTarget && nearDetective);
+      if(!onTarget) document.getElementById('crosshair').classList.toggle('hot', onTarget);
+      else document.getElementById('crosshair').classList.add('hot');
+      if(onTarget) document.getElementById('crosshair').classList.remove('talk');
+    }
 
     // win check
     if(exitOpen){
